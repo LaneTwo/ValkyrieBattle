@@ -34,11 +34,15 @@ ValkyrieBattleContract.prototype = {
 
     createNewGame: function(gameHash){
         this.matches.set(this.matchCount, {
-            state: "WaitingForMatch", // WaitingForMatch, AskForAccept, GameInProgress, EndGameRequested, 
+            state: "WaitingForMatch", // WaitingForMatch, WaitingForAccept, GameInProgress, EndGameRequested, GameEnded
             created: Blockchain.transaction.timestamp,
             playerGameHash: [gameHash,''],
             playerAddress: [Blockchain.transaction.from, ''],
-            startPlayer: 0,            
+            currentPlayer: 0,
+            attemptToMatchTimestamp: 0,  
+            lastMoveTimestamp: 0, 
+            winer: 0,
+            winningReason: 0, // 0: nomal, 1: timeout, 2: cheat
             moves:[]
         });
 
@@ -46,11 +50,145 @@ ValkyrieBattleContract.prototype = {
     },
 
     matchGame: function(gameId, gameHash){
+        var cannotMatchGame = false;
         var game = this.matches.get(gameId);
         if(!game){
             throw new Error("Invalid game ID.");
         }
+
+        if(game.state !== "WaitingForMatch"){
+            if(game.state === "WaitingForAccept"){
+                var currentTime = Math.floor(Date.now() / 1000); 
+                if(currentTime < (game.attemptToMatchTimestamp + 60)){
+                    cannotMatchGame = true;
+                })
+            }else{
+                cannotMatchGame = true;
+            }            
+        }
+
+        if(cannotMatchGame){
+            throw new Error("Can only match game not started.");
+        }
+        game.playerGameHash[1] = gameHash;
+        game.playerAddress[1] = Blockchain.transaction.from;
+        game.attemptToMatchTimestamp = Blockchain.transaction.timestamp;
+        game.state = "WaitingForAccept";
+
+        this.matches.set(gameId, game);
+    },
+
+    getUnmatchedGame: function(){
+        var unmatchedGames = [];
+        for(var i = 0; i < this.matchCount; i++){
+            var game = this.matches.get(i);
+
+            if(game.state === "WaitingForMatch"){
+                unmatchedGames.push(game);
+            }else if(game.state === "WaitingForAccept"){
+                var currentTime = Math.floor(Date.now() / 1000); 
+                if((game.attemptToMatchTimestamp + 60) < currentTime){
+                    unmatchedGames.push(game);
+                }
+            }
+        }
+
+        return unmatchedGames;
+    },
+
+    acceptGame: function(gameId){
+        var cannotMatchGame = false;
+        var game = this.matches.get(gameId);
+        if(!game){
+            throw new Error("Invalid game ID.");
+        }
+
+        if(game.playerAddress[0] !== Blockchain.transaction.from){
+            throw new Error("You are not the creator of the game");
+        }
+
+        if(game.state !== "WaitingForAccept"){
+            throw new Error("Can only accept ready to start game");
+        }else{
+            var currentTime = Math.floor(Date.now() / 1000); 
+            if(currentTime > (game.attemptToMatchTimestamp + 60)){
+                throw new Error("Can't accept expired game.");
+            }
+
+            game.lastMoveTimestamp = Block.transaction.timestamp;
+            game.state = "GameInProgress";
+
+            this.matches.set(gameId, game);
+        }
+
+    },
+
+    makeMove: function(gameId, x, y){
+        var cannotMatchGame = false;
+        var game = this.matches.get(gameId);
+        if(!game){
+            throw new Error("Invalid game ID.");
+        }
+
+        if(game.state !== "GameInProgress"){
+            throw new Error("Can only move on started game");
+        }
+
+        if(game.playerAddress[game.currentPlayer] !== Blockchain.transaction.from){
+            throw new Error("It't not your turn to move.");
+        }
+
+        var currentTime = Math.floor(Date.now() / 1000); 
+        if(currentTime > (game.lastMoveTimestamp + 90)){
+            // Timeout
+            game.state = "GameEnded";
+            game.winer = 1 - game.currentPlayer;
+            game.winningReason = 1;
+
+            this.matches.set(gameId, game);
+            
+            // Update user record
+            var userGame = this.userGameMap.get(game.playerAddress[game.currentPlayer]);
+            if(!userGame){
+                userGame = {
+                    win: 0,
+                    lost: 0
+                }
+            }
+
+            userGame.lost++;
+            this.userGameMap.set(game.playerAddress[game.currentPlayer], userGame);
+
+            userGame = this.userGameMap.get(game.playerAddress[game.winer]);
+            if(!userGame){
+                userGame = {
+                    win: 0,
+                    lost: 0
+                }
+            }
+
+            userGame.win++;
+            this.userGameMap.set(game.playerAddress[game.winer], userGame);
+        }else{
+            game.move.push({
+                player: 1 - game.currentPlayer,
+                x: x,
+                y: y,
+                state: -1
+            });
+
+            game.lastMoveTimestamp = Blockchain.transaction.timestamp;
+            game.currentPlayer = 1 - game.currentPlayer;
+
+            this.matches.set(gameId, game);
+        }
+    },
+
+    updateMoveResult: function(gameId, moveIndex, result){
+        
     }
+
+
 
     // MD5 related function
     _RotateLeft: function(lValue, iShiftBits) {
