@@ -12,7 +12,12 @@ PlaneOrientation.Bottom = 2;
 PlaneOrientation.Left = 3;
 
 //飞机的数量
-var PLAN_NUM = 3;
+var MAX_PLAN_NUM = 3;
+
+var Point = function(x,y) {
+    this.x = x;
+    this.y = y;
+}
 
 //飞机
 var Plane = function(point, orientation) {
@@ -29,19 +34,19 @@ Plane.prototype = {
         }
     },
     isShot: function(point) {
-        switch (this.orientation) {
-            case PlaneOrientation.Top:
-
-            break;
-            case PlaneOrientation.Right:
+        if ( this.orientation == PlaneOrientation.Top ) {
+            if (((point.y == this.point.y + 1) && (point.x >= this.point.x - 2 && point.x <= this.point.x + 2 )) ||
+            ((point.y == this.point.y + 2) && (point.x == this.point.x)) || ((point.y == this.point.y + 3) && (point.x >= this.point.x - 1 && point.x <= this.point.x + 1))) {
+                return true;
+            } else {
+                return false;
+            }
+        } else if (this.orientation == PlaneOrientation.Right) {
             
-            break;
-            case PlaneOrientation.Bottom:
+        } else if (this.orientation == PlaneOrientation.Bottom) {
 
-            break;
-            case PlaneOrientation.Left:
-            
-            break;
+        } else {
+
         }
     }
 };
@@ -65,7 +70,7 @@ var Game = function() {
 
 Game.prototype = {
     init: function() {
-
+        new Plane(new SVGPoint)
     },
 
     addPlane: function(plane) {
@@ -73,7 +78,7 @@ Game.prototype = {
     }, 
 
     isGameOver: function() {
-        
+
     }
 };
 
