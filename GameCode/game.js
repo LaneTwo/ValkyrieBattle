@@ -14,8 +14,41 @@ PlaneOrientation.Left = 3;
 //飞机的数量
 var PLAN_NUM = 3;
 
+//飞机
+var Plane = function(point, orientation) {
+    this.point = point;
+    this.orientation = orientation;
+};
+
+Plane.prototype = {
+    isCrash: function(point) {
+        if (this.point.x == point.x && this.point.y == point.y) {
+            return true;
+        } else {
+            return false;
+        }
+    },
+    isShot: function(point) {
+        switch (this.orientation) {
+            case PlaneOrientation.Top:
+
+            break;
+            case PlaneOrientation.Right:
+            
+            break;
+            case PlaneOrientation.Bottom:
+
+            break;
+            case PlaneOrientation.Left:
+            
+            break;
+        }
+    }
+};
+
 var Game = function() {
     this.numberOfPlanes = 0;
+    this.planes = [];
     this.status = [
         [0,0,0,0,0,0,0,0,0,0],
         [0,0,0,0,0,0,0,0,0,0],
@@ -34,14 +67,13 @@ Game.prototype = {
     init: function() {
 
     },
-    addPlane: function(point, orientation) {
 
-    },
-    isCrash: function(point) {
+    addPlane: function(plane) {
+        
+    }, 
 
-    },
-    isShot: function(point) {
-
+    isGameOver: function() {
+        
     }
-}
+};
 
