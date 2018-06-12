@@ -38,12 +38,13 @@ ValkyrieBattleContract.prototype = {
             created: Blockchain.transaction.timestamp,
             playerGameHash: [gameHash,''],
             playerAddress: [Blockchain.transaction.from, ''],
+            playerLayout:[[],[]],
             currentPlayer: 0,
-            attemptToMatchTimestamp: 0,  
+            attemptToMatchTimestamp: 0,
             lastMoveTimestamp: 0, 
-            winer: 0,
+            winner: 0,
             winningReason: 0, // 0: nomal, 1: timeout, 2: cheat
-            moves:[]
+            attacks:[]
         });
 
         this.matchCount = this.matchCount + 1;
@@ -56,12 +57,16 @@ ValkyrieBattleContract.prototype = {
             throw new Error("Invalid game ID.");
         }
 
+        if(game.playerAddress[0] === Blockchain.transaction.from){
+            throw new Error("Not allowed to play with yourself.");
+        }
+
         if(game.state !== "WaitingForMatch"){
             if(game.state === "WaitingForAccept"){
                 var currentTime = Math.floor(Date.now() / 1000); 
                 if(currentTime < (game.attemptToMatchTimestamp + 60)){
                     cannotMatchGame = true;
-                })
+                }
             }else{
                 cannotMatchGame = true;
             }            
@@ -120,11 +125,9 @@ ValkyrieBattleContract.prototype = {
 
             this.matches.set(gameId, game);
         }
-
     },
 
-    makeMove: function(gameId, x, y){
-        var cannotMatchGame = false;
+    attach: function(gameId, x, y){
         var game = this.matches.get(gameId);
         if(!game){
             throw new Error("Invalid game ID.");
@@ -140,37 +143,9 @@ ValkyrieBattleContract.prototype = {
 
         var currentTime = Math.floor(Date.now() / 1000); 
         if(currentTime > (game.lastMoveTimestamp + 90)){
-            // Timeout
-            game.state = "GameEnded";
-            game.winer = 1 - game.currentPlayer;
-            game.winningReason = 1;
-
-            this.matches.set(gameId, game);
-            
-            // Update user record
-            var userGame = this.userGameMap.get(game.playerAddress[game.currentPlayer]);
-            if(!userGame){
-                userGame = {
-                    win: 0,
-                    lost: 0
-                }
-            }
-
-            userGame.lost++;
-            this.userGameMap.set(game.playerAddress[game.currentPlayer], userGame);
-
-            userGame = this.userGameMap.get(game.playerAddress[game.winer]);
-            if(!userGame){
-                userGame = {
-                    win: 0,
-                    lost: 0
-                }
-            }
-
-            userGame.win++;
-            this.userGameMap.set(game.playerAddress[game.winer], userGame);
+            this._updateGameResult(gameId, 1 - game.currentPlayer, 1);
         }else{
-            game.move.push({
+            game.attacks.push({
                 player: 1 - game.currentPlayer,
                 x: x,
                 y: y,
@@ -184,10 +159,192 @@ ValkyrieBattleContract.prototype = {
         }
     },
 
-    updateMoveResult: function(gameId, moveIndex, result){
+    updateAttackResult: function(gameId, result){
+        var cannotMatchGame = false;
+        var game = this.matches.get(gameId);
+        if(!game){
+            throw new Error("Invalid game ID.");
+        }
+
+        if(game.state !== "GameInProgress"){
+            throw new Error("Can only update on started game");
+        }
+
+        if(game.playerAddress[game.currentPlayer] !== Blockchain.transaction.from){
+            throw new Error("It't not your turn to move.");
+        }
+
+        if(result < 0 || result > 2){
+            throw new Error("Invalid attack result.");
+        }
         
+        var currentTime = Math.floor(Date.now() / 1000); 
+        if(currentTime > (game.lastMoveTimestamp + 90)){
+            this._updateGameResult(gameId, 1 - game.currentPlayer, 1);
+        }else{
+            var attack = game.attacks[game.attacks.length - 1];
+            if(attack.state !== -1){
+                throw new Error("Can only update position state once.");
+            }
+
+            attack.state = result;
+
+            game.lastMoveTimestamp = Blockchain.transaction.timestamp;
+            this.matches.set(gameId, game);
+        }        
     },
 
+    requestEndGame: function(gameId, enemyGameLayout, ownGameLayout, salt){        
+        var game = this.matches.get(gameId);
+        if(!game){
+            throw new Error("Invalid game ID.");
+        }
+        if(game.state !== "GameInProgress"){
+            throw new Error("Can only request end inprogress game.");
+        }
+
+        if(game.playerAddress[game.currentPlayer] !== Blockchain.transaction.from){
+            throw new Error("It't not your turn to move.");
+        }
+
+        var ownGameHash = this._MD5(ownGameLayout + salt);
+
+        if(ownGameHash === game.playerGameHash[game.currentPlayer]){
+            // TODO: Verify layout and every move
+            game.state = "EndGameRequested";
+            game.lastMoveTimestamp = Blockchain.transaction.timestamp;
+            game.playerLayout[game.currentPlayer] = ownGameLayout;
+            game.playerLayout[1 - game.currentPlayer] = enemyGameLayout;            
+
+            this.matches.set(gameId, game);
+        }else{
+            // Cheater
+            this._updateGameResult(gameId, 1 - game.currentPlayer, 2);
+        }
+
+    },
+
+    challengeEnemy: function(gameId, ownGameLayout, salt){
+        var game = this.matches.get(gameId);
+        if(!game){
+            throw new Error("Invalid game ID.");
+        }
+        if(game.state !== "EndGameRequested"){
+            throw new Error("Can only response when end game requested.");
+        }
+
+        if(game.playerAddress[1 - game.currentPlayer] !== Blockchain.transaction.from){
+            throw new Error("Only game player can do this.");
+        }
+
+        var currentTime = Math.floor(Date.now() / 1000); 
+        if(currentTime > (game.lastMoveTimestamp + 90)){
+            this._updateGameResult(gameId, game.currentPlayer, 1);
+        }else{
+            var ownGameHash = this._MD5(ownGameLayout + salt);
+
+            if(ownGameHash === game.playerGameHash[1 - game.currentPlayer]){
+                // TODO: Verify layout and every move
+                game.state = "GameEnded";
+                
+                var winner = game.currentPlayer;
+                if(ownGameLayout !== game.playerLayout[1 - game.currentPlayer]){
+                    winner = 1 - game.currentPlayer;
+                    game.playerLayout[1 - game.currentPlayer] = ownGameLayout;
+                }
+
+                this._updateGameResult(gameId, winner, 0);
+            }else{
+                // Cheater
+                this._updateGameResult(gameId, game.currentPlayer, 2);
+            }
+        }        
+    },
+
+    surrenderGame: function(gameId){
+        var cannotMatchGame = false;
+        var game = this.matches.get(gameId);
+        if(!game){
+            throw new Error("Invalid game ID.");
+        }
+
+        if(game.state !== "GameInProgress" && game.state !== "EndGameRequested"){
+            throw new Error("Can only surrender not ended game");
+        }
+
+        var player = -1;
+
+        if(game.playerAddress[0] === Blockchain.transaction.from){
+            player = 0;
+        }
+
+        if(game.playerAddress[1] === Blockchain.transaction.from){
+            player = 1;
+        }
+
+        if(player === -1){
+            throw new Error("Only game player allowed.");
+        }
+
+        this._updateGameResult(gameId, 1 - player, 0);
+    },
+
+    updateTimeoutGameResult: function(gameId){
+        var game = this.matches.get(gameId);
+        if(!game){
+            throw new Error("Invalid game ID.");
+        }
+
+        if(game.state !== "GameInProgress" && game.state !== "EndGameRequested"){
+            throw new Error("Can only update timeout game");
+        }
+
+        var currentTime = Math.floor(Date.now() / 1000); 
+        if(currentTime > (game.lastMoveTimestamp + 90)){
+
+            var winner = 1 - game.currentPlayer;
+            if(game.state === "EndGameRequested"){
+                winner = game.currentPlayer;
+            }
+            this._updateGameResult(gameId, winner, 1);
+        }
+    },
+
+    _verifyGameLayout:function(gameId, ownGameLayout, salt){
+        //TODO: anti-cheating verify
+    },
+
+    _updateGameResult: function(gameId, winner, winningReason){
+        var game = this.matches.get(gameId);
+        game.state = "GameEnded";
+        game.winner = winner;
+        game.winningReason = winningReason;
+
+        this.matches.set(gameId, game);
+        
+        // Update user record
+        var userGame = this.userGameMap.get(game.playerAddress[1 - winner]);
+        if(!userGame){
+            userGame = {
+                win: 0,
+                lost: 0
+            }
+        }
+
+        userGame.lost++;
+        this.userGameMap.set(game.playerAddress[1 - winner], userGame);
+
+        userGame = this.userGameMap.get(game.playerAddress[game.winner]);
+        if(!userGame){
+            userGame = {
+                win: 0,
+                lost: 0
+            }
+        }
+
+        userGame.win++;
+        this.userGameMap.set(game.playerAddress[game.winner], userGame);
+    },
 
 
     // MD5 related function
