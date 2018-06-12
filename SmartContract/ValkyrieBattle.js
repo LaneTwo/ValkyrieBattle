@@ -186,7 +186,7 @@ ValkyrieBattleContract.prototype = {
 
     updateMoveResult: function(gameId, moveIndex, result){
         
-    }
+    },
 
 
 
