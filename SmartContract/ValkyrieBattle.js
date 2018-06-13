@@ -3,15 +3,18 @@
 var ValkyrieBattleContract = function () {    
     LocalContractStorage.defineProperty(this, "owner", null);
     LocalContractStorage.defineProperty(this, "matchCount", null);
+    LocalContractStorage.defineProperty(this, "userGameCount", null);
+    LocalContractStorage.defineProperty(this, "leaderboardArray", null);
     LocalContractStorage.defineMapProperty(this, "matches");
     LocalContractStorage.defineMapProperty(this, "userNameMap");
-    LocalContractStorage.defineMapProperty(this, "userGameMap");
 };
 
 ValkyrieBattleContract.prototype = {
     init: function () {
         this.owner = Blockchain.transaction.from;
-        this.matchCount = 0;             
+        this.matchCount = 0;
+        this.userGameCount = 0; 
+        this.leaderboardArray = [];          
     },
     setName: function(name){
         if(Blockchain.transaction.value.gt(new BigNumber(0))){
@@ -115,6 +118,18 @@ ValkyrieBattleContract.prototype = {
         }
 
         return games;
+    },
+
+    getLeaderboard: function(){
+        var leaderboardArray = this.leaderboardArray;
+        for(var i = 0; i < leaderboardArray.length; i++){
+            var userName = this.userNameMap.get(leaderboardArray[i].address);
+            if(!userName){
+                userName = leaderboardArray[i].address;
+            }
+            leaderboardArray[i]["name"] = userName;
+        }
+        return leaderboardArray;
     },
 
     acceptGame: function(gameId){
@@ -338,29 +353,44 @@ ValkyrieBattleContract.prototype = {
         this.matches.set(gameId, game);
         
         // Update user record
-        var userGame = this.userGameMap.get(game.playerAddress[1 - winner]);
-        if(!userGame){
-            userGame = {
-                win: 0,
-                lost: 0
-            }
-        }
-
-        userGame.lost++;
-        this.userGameMap.set(game.playerAddress[1 - winner], userGame);
-
-        userGame = this.userGameMap.get(game.playerAddress[game.winner]);
-        if(!userGame){
-            userGame = {
-                win: 0,
-                lost: 0
-            }
-        }
-
-        userGame.win++;
-        this.userGameMap.set(game.playerAddress[game.winner], userGame);
+        this._updateUserLeaderboard(game.playerAddress[winner], true);
+        this._updateUserLeaderboard(game.playerAddress[1 - winner], false);
     },
 
+    _updateUserLeaderboard: function(address, isWon){
+        var userIndex = 0;
+        var newUser = true;
+        for(; i < this.leaderboardArray.length; i++){
+            if(this.leaderboardArray[userIndex].address === address){
+                newUser = false;
+                break;
+            }
+        }
+
+        if(newUser){
+            var userGame = {
+                address: address,
+                win: isWon? 1 : 0,
+                loss: isWon? 0 : 1
+            }
+
+            var leaderboardArray = this.leaderboardArray;
+            leaderboardArray.push(userGame);
+            this.leaderboardArray = leaderboardArray;
+        }else{
+            var leaderboardArray = this.leaderboardArray;
+            var userGame = leaderboardArray[userIndex];
+
+            if(isWon){
+                userGame.win++;
+            }else{
+                userGame.loss++;
+            }
+            leaderboardArray[userIndex] = userGame;
+
+            this.leaderboardArray = leaderboardArray;
+        }
+    },
 
     // MD5 related function
     _RotateLeft: function(lValue, iShiftBits) {
