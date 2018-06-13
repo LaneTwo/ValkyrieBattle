@@ -27,23 +27,13 @@ ValkyrieBattleContract.prototype = {
 
         this.userNameMap.set(Blockchain.transaction.from, name);
     },
-    getName: function(name){
-        if(Blockchain.transaction.value.gt(new BigNumber(0))){
-            throw new Error("Don't send any NAS.");
-        }
-        var userName = this.userNameMap.get(Blockchain.transaction.from);
-        if(!userName){
-            userName = Blockchain.transaction.from;
-        }
-        return userName;
-    },
 
     createNewGame: function(gameHash){
         this.matches.set(this.matchCount, {
             gameId: this.matchCount,
             state: "WaitingForMatch", // WaitingForMatch, WaitingForAccept, GameInProgress, EndGameRequested, GameEnded
             created: Blockchain.transaction.timestamp,
-            playerGameHash: [gameHash,''],
+            playerGameHash: [gameHash.toLowerCase(),''],
             playerAddress: [Blockchain.transaction.from, ''],
             playerLayout:['',''],
             currentPlayer: 0,
@@ -82,54 +72,12 @@ ValkyrieBattleContract.prototype = {
         if(cannotMatchGame){
             throw new Error("Can only match game not started.");
         }
-        game.playerGameHash[1] = gameHash;
+        game.playerGameHash[1] = gameHash.toLowerCase();
         game.playerAddress[1] = Blockchain.transaction.from;
         game.attemptToMatchTimestamp = Blockchain.transaction.timestamp;
         game.state = "WaitingForAccept";
 
         this.matches.set(gameId, game);
-    },
-
-    getUnmatchedGame: function(){
-        var unmatchedGames = [];
-        for(var i = 0; i < this.matchCount; i++){
-            var game = this.matches.get(i);
-            game["players"] = [this.userNameMap.get(game.playerAddress[0]), this.userNameMap.get(game.playerAddress[1])];
-
-            if(game.state === "WaitingForMatch"){
-                unmatchedGames.push(game);
-            }else if(game.state === "WaitingForAccept"){
-                var currentTime = Math.floor(Date.now() / 1000); 
-                if((game.attemptToMatchTimestamp + 60) < currentTime){
-                    unmatchedGames.push(game);
-                }
-            }
-        }
-
-        return unmatchedGames;
-    },
-
-    getAllGames: function(){
-        var games = [];
-        for(var i = 0; i < this.matchCount; i++){
-            var game = this.matches.get(i);
-            game["players"] = [this.userNameMap.get(game.playerAddress[0]), this.userNameMap.get(game.playerAddress[1])];
-            games.push(game);
-        }
-
-        return games;
-    },
-
-    getLeaderboard: function(){
-        var leaderboardArray = this.leaderboardArray;
-        for(var i = 0; i < leaderboardArray.length; i++){
-            var userName = this.userNameMap.get(leaderboardArray[i].address);
-            if(!userName){
-                userName = leaderboardArray[i].address;
-            }
-            leaderboardArray[i]["name"] = userName;
-        }
-        return leaderboardArray;
     },
 
     acceptGame: function(gameId){
@@ -340,6 +288,61 @@ ValkyrieBattleContract.prototype = {
         }
     },
 
+    // Call function
+    getName: function(name){
+        if(Blockchain.transaction.value.gt(new BigNumber(0))){
+            throw new Error("Don't send any NAS.");
+        }
+        var userName = this.userNameMap.get(Blockchain.transaction.from);
+        if(!userName){
+            userName = Blockchain.transaction.from;
+        }
+        return userName;
+    },
+
+    getUnmatchedGame: function(){
+        var unmatchedGames = [];
+        for(var i = 0; i < this.matchCount; i++){
+            var game = this.matches.get(i);
+            game["players"] = [this.userNameMap.get(game.playerAddress[0]), this.userNameMap.get(game.playerAddress[1])];
+
+            if(game.state === "WaitingForMatch"){
+                unmatchedGames.push(game);
+            }else if(game.state === "WaitingForAccept"){
+                var currentTime = Math.floor(Date.now() / 1000); 
+                if((game.attemptToMatchTimestamp + 60) < currentTime){
+                    unmatchedGames.push(game);
+                }
+            }
+        }
+
+        return unmatchedGames;
+    },
+
+    getAllGames: function(){
+        var games = [];
+        for(var i = 0; i < this.matchCount; i++){
+            var game = this.matches.get(i);
+            game["players"] = [this.userNameMap.get(game.playerAddress[0]), this.userNameMap.get(game.playerAddress[1])];
+            games.push(game);
+        }
+
+        return games;
+    },
+    
+    getLeaderboard: function(){
+        var leaderboardArray = this.leaderboardArray;
+        for(var i = 0; i < leaderboardArray.length; i++){
+            var userName = this.userNameMap.get(leaderboardArray[i].address);
+            if(!userName){
+                userName = leaderboardArray[i].address;
+            }
+            leaderboardArray[i]["name"] = userName;
+        }
+        return leaderboardArray;
+    },
+
+    // Internal function
     _verifyGameLayout:function(gameId, ownGameLayout, salt){
         //TODO: anti-cheating verify
     },
@@ -360,7 +363,7 @@ ValkyrieBattleContract.prototype = {
     _updateUserLeaderboard: function(address, isWon){
         var userIndex = 0;
         var newUser = true;
-        for(; i < this.leaderboardArray.length; i++){
+        for(var i = 0; i < this.leaderboardArray.length; i++){
             if(this.leaderboardArray[userIndex].address === address){
                 newUser = false;
                 break;
@@ -501,7 +504,7 @@ ValkyrieBattleContract.prototype = {
         return utftext;
     },
 
-    MD5: function(text){
+    _MD5: function(text){
         var x=Array();
         var k,AA,BB,CC,DD,a,b,c,d;
         var S11=7, S12=12, S13=17, S14=22;
@@ -591,9 +594,6 @@ ValkyrieBattleContract.prototype = {
      
             return temp.toLowerCase();        
     }
-
-    
-
 
 };
 module.exports = ValkyrieBattleContract;
