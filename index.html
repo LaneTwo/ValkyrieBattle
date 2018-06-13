@@ -2,6 +2,7 @@
 <html>
 <head>
     <script src="./lib/phaser.min.js"></script>
+    <script src="./plane.js"></script>
 </head>
 <body>
 
@@ -11,6 +12,7 @@
         type: Phaser.AUTO,
         width: 800,
         height: 800,
+        parent: 'mine',
         physics: {
             default: 'arcade',
             arcade: {
@@ -102,8 +104,21 @@
         graphics.fillPath();
     }
     
-
     </script>
+
+    <div class="tools" id="tools">
+
+    </div>
+
+    <div class="mine">
+        <label>Mine Plane</label>
+        <div id="mine"></div>
+    </div>
+
+    <div class="enemy">
+        <label>Enemy Plane</label>
+        <div id="enemy"></div>
+    </div>
 
 </body>
 </html>
