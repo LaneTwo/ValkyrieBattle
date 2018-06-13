@@ -12,7 +12,7 @@ function drawGrid(canvasWidth, canvasHeight, graphics) {
         cellHeight: cellHeight
     }
 
-    graphics.lineStyle(4, 0xff0000, 1.0);
+    graphics.lineStyle(4, 0x5a3105, 1.0);
     graphics.beginPath();
     for (var i = 0; i < canvasWidth; i += grid.cellWidth) {
         graphics.moveTo(i, 0);
