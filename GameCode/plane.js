@@ -10,7 +10,7 @@ var Plane = new Phaser.Class({
 
         this.setTexture('plane');
         this.setPosition(x, y);
-        this.setScale(0.5);
+        this.setScale(0.3);
     }
 
 });
@@ -18,6 +18,8 @@ var Plane = new Phaser.Class({
 var config = {
     type: Phaser.AUTO,
     parent: 'tools',
+    width: 100,
+    height: 100,
     scene: {
         preload: preload,
         create: create
@@ -33,7 +35,5 @@ function preload ()
 
 function create ()
 {
-    this.children.add(new Plane(this, 264, 250));
-    this.children.add(new Plane(this, 464, 350));
-    this.children.add(new Plane(this, 664, 450));
+    this.children.add(new Plane(this, 50, 50));
 }
