@@ -7,19 +7,61 @@
 </head>
 <body>
 
-    <div class="tools" id="tools">
+    <script>
+        var config = {
+            type: Phaser.AUTO,
+            parent: 'canvas',
+            width: 1024,
+            height: 800,
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };    
 
-    </div>
+        var game = new Phaser.Game(config);
 
-    <div class="mine">
-        <label>Mine Plane</label>
-        <div id="mine"></div>
-    </div>
+        var planes = [];
 
-    <div class="enemy">
-        <label>Enemy Plane</label>
-        <div id="enemy"></div>
-    </div>
+        function preload () {
+            this.load.image("plane", "images/plane.jpeg");
+        }
+        
+        function create () {
+            var SELF = this;
+
+            drawGrid(400, 400, this.add.graphics({x: 100, y: 10}))
+            drawGrid(400, 400, this.add.graphics({x: 550, y: 10}))
+
+            var plane = new Plane(this, 50, 50);
+            planes.push(plane);
+            this.children.add(plane);
+
+            plane.setInteractive();
+            this.input.setDraggable(plane);
+
+            this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
+
+                if (planes.length >= 3) {
+                    gameObject.x = dragX;
+                    gameObject.y = dragY;
+                } else {
+                    var p = new Plane(SELF, dragX, dragY);
+                    p.setInteractive();
+                    SELF.input.setDraggable(p);
+                    planes.push(p);
+                    SELF.children.add(p);
+                }
+            });
+        }
+
+        function update (time, delta) {
+
+        }
+    </script>
+
+    <div id="canvas"></div>
 
 </body>
 </html>
