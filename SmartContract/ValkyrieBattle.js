@@ -289,7 +289,7 @@ ValkyrieBattleContract.prototype = {
     },
 
     // Call function
-    getName: function(name){
+    getName: function(){
         if(Blockchain.transaction.value.gt(new BigNumber(0))){
             throw new Error("Don't send any NAS.");
         }
@@ -317,6 +317,15 @@ ValkyrieBattleContract.prototype = {
         }
 
         return unmatchedGames;
+    },
+
+    getGame: function(gameId){
+        var game = this.matches.get(gameId);
+        if(!game){
+            throw new Error("Invalid game ID.");
+        }
+
+        return game;
     },
 
     getAllGames: function(){
