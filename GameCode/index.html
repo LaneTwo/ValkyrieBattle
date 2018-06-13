@@ -5,122 +5,65 @@
     <script src="./plane.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/nebpay.js@0.2.0/dist/nebPay.min.js"></script>
     <script src="walletWrapper.js"></script>
+    <script src="./grid.js"></script>
 </head>
 <body>
 
     <script>
-
-    var config = {
-        type: Phaser.AUTO,
-        width: 800,
-        height: 800,
-        parent: 'mine',
-        physics: {
-            default: 'arcade',
-            arcade: {
-                gravity: { y: 200 }
+        var config = {
+            type: Phaser.AUTO,
+            parent: 'canvas',
+            width: 1024,
+            height: 800,
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
             }
-        },
-        scene: {
-            preload: preload,
-            create: create
+        };    
+
+        var game = new Phaser.Game(config);
+
+        var planes = [];
+
+        function preload () {
+            this.load.image("plane", "images/plane.jpeg");
         }
-    };
+        
+        function create () {
+            var SELF = this;
 
-    var game = new Phaser.Game(config);
-    var graphics;
-    var grid;
-    function preload ()
-    {
-        this.load.image("plane", "images/plane.jpeg");
-    }
+            drawGrid(400, 400, this.add.graphics({x: 100, y: 10}))
+            drawGrid(400, 400, this.add.graphics({x: 550, y: 10}))
 
-    function create ()
-    {
+            var plane = new Plane(this, 50, 50);
+            planes.push(plane);
+            this.children.add(plane);
 
-        var cols = 10;
-        var rows = 10;
+            plane.setInteractive();
+            this.input.setDraggable(plane);
 
-        // cell width is the parent width divided by the number of columns
-        var cellWidth = game.canvas.width / cols;
-        // cell height is the parent height divided the number of rows
-        var cellHeight = game.canvas.width / rows;
-        //make an align grid
-        grid = {
-            cellWidth: cellWidth,
-            cellHeight: cellHeight
+            this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
+
+                if (planes.length >= 3) {
+                    gameObject.x = dragX;
+                    gameObject.y = dragY;
+                } else {
+                    var p = new Plane(SELF, dragX, dragY);
+                    p.setInteractive();
+                    SELF.input.setDraggable(p);
+                    planes.push(p);
+                    SELF.children.add(p);
+                }
+            });
         }
 
-        graphics = this.add.graphics({x: 0, y: 0});
+        function update (time, delta) {
 
-        //and layout
-        show(game);
-
-        var planeNum = 3;
-        for (var i = 0; i < planeNum; i++) {
-            var plane = this.add.image(0, 0, "plane");
-            plane.setScale(0.5);
-
-            if (i === 0) {
-                yy = 1
-                xx = 4
-            } else if (i === 1) {
-                yy = 4
-                xx = 7
-            } else {
-                yy = 7
-                xx = 2
-            }
-            //place the duck at i for the column
-            //and yy as the random row
-            placeAt(xx, yy, plane);
         }
-    }
-
-    function placeAt(xx, yy, obj) {
-        //calculate the center of the cell
-        //by adding half of the height and width
-        //to the x and y of the coordinates
-        var x2 = grid.cellWidth * xx + grid.cellWidth / 2;
-        var y2 = grid.cellHeight * yy + grid.cellHeight / 2;
-        obj.x = x2;
-        obj.y = y2;
-    }
-
-    // mostly for planning and debugging this will
-    // create a visual representation of the grid
-    function show(game) {
-
-        graphics.lineStyle(4, 0xff0000, 1.0);
-        graphics.beginPath();
-        for (var i = 0; i < game.canvas.width; i += grid.cellWidth) {
-            graphics.moveTo(i, 0);
-            graphics.lineTo(i, game.canvas.height);
-        }
-        for (var i = 0; i < game.canvas.height; i += grid.cellHeight) {
-            graphics.moveTo(0, i);
-            graphics.lineTo(game.canvas.width, i);
-        }
-        graphics.closePath();
-        graphics.strokePath();
-        graphics.fillPath();
-    }
-    
     </script>
 
-    <div class="tools" id="tools">
-
-    </div>
-
-    <div class="mine">
-        <label>Mine Plane</label>
-        <div id="mine"></div>
-    </div>
-
-    <div class="enemy">
-        <label>Enemy Plane</label>
-        <div id="enemy"></div>
-    </div>
+    <div id="canvas"></div>
 
 </body>
 </html>
