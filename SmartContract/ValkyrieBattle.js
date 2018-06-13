@@ -10,7 +10,6 @@ var ValkyrieBattleContract = function () {
 
 ValkyrieBattleContract.prototype = {
     init: function () {
-        this.matches = [];
         this.owner = Blockchain.transaction.from;
         this.matchCount = 0;             
     },
@@ -29,21 +28,26 @@ ValkyrieBattleContract.prototype = {
         if(Blockchain.transaction.value.gt(new BigNumber(0))){
             throw new Error("Don't send any NAS.");
         }
-        return this.userNameMap.get(Blockchain.transaction.from);
+        var userName = this.userNameMap.get(Blockchain.transaction.from);
+        if(!userName){
+            userName = Blockchain.transaction.from;
+        }
+        return userName;
     },
 
     createNewGame: function(gameHash){
         this.matches.set(this.matchCount, {
+            gameId: this.matchCount,
             state: "WaitingForMatch", // WaitingForMatch, WaitingForAccept, GameInProgress, EndGameRequested, GameEnded
             created: Blockchain.transaction.timestamp,
             playerGameHash: [gameHash,''],
             playerAddress: [Blockchain.transaction.from, ''],
-            playerLayout:[[],[]],
+            playerLayout:['',''],
             currentPlayer: 0,
             attemptToMatchTimestamp: 0,
             lastMoveTimestamp: 0, 
             winner: 0,
-            winningReason: 0, // 0: nomal, 1: timeout, 2: cheat
+            winningReason: 0, // 0: normal, 1: timeout, 2: cheat
             attacks:[]
         });
 
@@ -87,6 +91,7 @@ ValkyrieBattleContract.prototype = {
         var unmatchedGames = [];
         for(var i = 0; i < this.matchCount; i++){
             var game = this.matches.get(i);
+            game["players"] = [this.userNameMap.get(game.playerAddress[0]), this.userNameMap.get(game.playerAddress[1])];
 
             if(game.state === "WaitingForMatch"){
                 unmatchedGames.push(game);
@@ -101,8 +106,18 @@ ValkyrieBattleContract.prototype = {
         return unmatchedGames;
     },
 
+    getAllGames: function(){
+        var games = [];
+        for(var i = 0; i < this.matchCount; i++){
+            var game = this.matches.get(i);
+            game["players"] = [this.userNameMap.get(game.playerAddress[0]), this.userNameMap.get(game.playerAddress[1])];
+            games.push(game);
+        }
+
+        return games;
+    },
+
     acceptGame: function(gameId){
-        var cannotMatchGame = false;
         var game = this.matches.get(gameId);
         if(!game){
             throw new Error("Invalid game ID.");
@@ -120,14 +135,14 @@ ValkyrieBattleContract.prototype = {
                 throw new Error("Can't accept expired game.");
             }
 
-            game.lastMoveTimestamp = Block.transaction.timestamp;
+            game.lastMoveTimestamp = Blockchain.transaction.timestamp;
             game.state = "GameInProgress";
 
             this.matches.set(gameId, game);
         }
     },
 
-    attach: function(gameId, x, y){
+    attack: function(gameId, x, y){
         var game = this.matches.get(gameId);
         if(!game){
             throw new Error("Invalid game ID.");
