@@ -80,6 +80,10 @@ Game.prototype = {
     },
 
     addPlane: function(plane) {
+        if (this.planes.length == MAX_PLAN_NUM) {
+            console.log("飞机数量已达上限，无法继续添加。");
+            return false;
+        }
         var point = plane.point;
         if (plane.orientation == PlaneOrientation.Top) {
             if (point.x < 0 || point.x >= MAP_COL || point.y < 0 || point.y >= MAP_ROW) {
@@ -199,6 +203,12 @@ Game.prototype = {
                 }
         }
     }, 
+    
+    shootAt: function(point) {
+        for(var i=0;i<this.planes.length;i++) {
+            
+        }
+    },
 
     isGameOver: function() {
         for(var i=0; i< MAP_ROW; i++) {
