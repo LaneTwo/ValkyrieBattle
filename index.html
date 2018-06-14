@@ -37,8 +37,12 @@
             this.add.text(250, 5, 'Mine Planes', { font: '16px Courier', fill: '#ffffff' });
             this.add.text(700, 5, 'Enemy Planes', { font: '16px Courier', fill: '#ffffff' });
 
-            drawGrid(400, 400, this.add.graphics({x: 100, y: 30}))
-            drawGrid(400, 400, this.add.graphics({x: 550, y: 30}))
+            var mineGrid = drawGrid(400, 400, this.add.graphics({x: 100, y: 30}));
+            var enemyGrid = drawGrid(400, 400, this.add.graphics({x: 550, y: 30}));
+
+            //  A drop zone
+            var zone = this.add.zone(290, 205, 400, 400).setDropZone();
+            zone.input.dropZone = true;
 
             var plane1 = new Plane(this, 50, 70).setInteractive();
             var plane2 = new Plane(this, 50, 70).setInteractive();
@@ -59,10 +63,14 @@
                 
             });
 
-            this.input.on('dragend', function (pointer, gameObject) {
+            this.input.on('dragend', function (pointer, gameObject, dropped) {
         
-                selectedPlane = gameObject;
+                if (!dropped) {
+                    gameObject.x = gameObject.input.dragStartX;
+                    gameObject.y = gameObject.input.dragStartY;
+                }
 
+                selectedPlane = gameObject;
                 cursors = SELF.input.keyboard.createCursorKeys();
             });
 
