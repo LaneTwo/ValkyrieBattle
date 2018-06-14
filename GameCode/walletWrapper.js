@@ -1,6 +1,6 @@
 
 WalletWrapper = function(){
-    this.contractAddress = "n1vNUQePtQaQv3JRtAxXXVcc7HprYHeDq5N";
+    this.contractAddress = "n1s3NHKUimhsHRBaBXjziG2Dk3qm1x4jdaw";
     var NebPay = require("nebpay");
     //this.callbackUrl = NebPay.config.mainnetUrl;    
     this.callbackUrl = NebPay.config.testnetUrl;
@@ -13,6 +13,7 @@ WalletWrapper.prototype = {
     
         var listener = function(resp) {
           console.log("set user name listener resp: " + JSON.stringify(resp));
+          localStorage.setItem("userName", name);
         }
     
         var callFunction = "setName";
@@ -26,17 +27,15 @@ WalletWrapper.prototype = {
         });
     },
     getName: function(callback){
-        var serialNumber;
-
         var listener = function(resp) {
-          console.log("getName listener resp: " + JSON.stringify(resp));
-          callback(resp);
+          //console.log("getName listener resp: " + resp);
+          callback(JSON.parse(resp.result));
         }
     
         var callFunction = "getName";
         var callArgs = "";
     
-        serialNumber = this.nebPay.simulateCall(this.contractAddress, 0, callFunction, callArgs, {
+        this.nebPay.simulateCall(this.contractAddress, 0, callFunction, callArgs, {
             qrcode: {
                 showQRCode: false
             },
@@ -44,9 +43,143 @@ WalletWrapper.prototype = {
             listener: listener  //set listener for extension transaction result
         });
     },
-    getGame: function(gameId){
-
+    getGame: function(gameId, callback){
+        var listener = function(resp) {
+          //console.log("getGame listener resp: " + JSON.stringify(resp));
+          callback(JSON.parse(resp.result));
+        }
+    
+        var callFunction = "getGame";
+        var callArgs = "["+ gameId+ "]";
+    
+        this.nebPay.simulateCall(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener  //set listener for extension transaction result
+        });        
     },
+    getUnmatchedGame: function(callback){
+        var listener = function(resp) {
+          //console.log("getUnmatchedGame listener resp: " + resp);
+          callback(JSON.parse(resp.result));
+        }
+    
+        var callFunction = "getUnmatchedGame";
+        var callArgs = "";
+    
+        this.nebPay.simulateCall(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener  //set listener for extension transaction result
+        });        
+    },
+    getAllGames: function(callback){
+        var listener = function(resp) {
+          //console.log("getAllGames listener resp: " + resp);
+          callback(JSON.parse(resp.result));
+        }
+    
+        var callFunction = "getAllGames";
+        var callArgs = "";
+    
+        this.nebPay.simulateCall(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener  //set listener for extension transaction result
+        });        
+    },
+    getLeaderboard: function(callback){
+        var listener = function(resp) {
+          //console.log("getLeaderboard listener resp: " + resp);
+          callback(JSON.parse(resp.result));
+        }
+    
+        var callFunction = "getLeaderboard";
+        var callArgs = "";
+    
+        this.nebPay.simulateCall(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener  //set listener for extension transaction result
+        });        
+    },
+    getUserCurrentOpenGame: function(callback){
+        var listener = function(resp) {
+          //console.log("getUserCurrentOpenGame listener resp: " + resp);
+          callback(JSON.parse(resp.result));
+        }
+    
+        var callFunction = "getUserCurrentOpenGame";
+        var callArgs = "";
+    
+        this.nebPay.simulateCall(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener  //set listener for extension transaction result
+        });        
+    },
+    createNewGame: function(planeLayout, salt, callback){
+        var serialNumber;
+    
+        if(localStorage.getItem("currentGameId")){
+            callback("You already created a game, please wait for accept or join other's game.");
+            return;
+        }
+        var listener = function(resp) {
+          //console.log("createNewGame listener resp: " + resp);
+        }
+    
+        var layoutStr = JSON.stringify(planeLayout) + salt;
+        var gameHash = md5(layoutStr);
+        var callFunction = "createNewGame";
+        var callArgs = "[\"" + gameHash + "\"]";    
+        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener
+        });
+
+        // queryPayInfo is not very reliable to get the execute_result
+        // setTimeout(() => {
+        //     this.nebPay.queryPayInfo(serialNumber, {callback: this.callbackUrl})   //search transaction result from server (result upload to server by app)
+        //     .then(function (resp) {
+        //         console.log("createNewGame fresh resp: " + resp);
+        //         var data = JSON.parse(resp).data;
+        //         if(data.execute_error === ""){
+        //             localStorage.setItem("currentGameId", data.execute_result);
+        //             localStorage.setItem("currentGameLayout", JSON.stringify(planeLayout));
+        //             localStorage.setItem("currentGameSalt", salt);
+        //             callback("Game created.");
+        //         }       
+        //     })
+        //     .catch(function (err) {
+        //         console.log(err);
+        //     });
+        // }, 20000);  
 
 
+        setTimeout(() => {
+            this.getUserCurrentOpenGame(function(result){
+                if(result.gameId >= 0){
+                    localStorage.setItem("currentGameId", result.gameId);
+                    localStorage.setItem("isGameCreator", result.isCreator);
+                    localStorage.setItem("currentGameLayout", JSON.stringify(planeLayout));
+                    localStorage.setItem("currentGameSalt", salt);
+                }
+            })
+        }, 20000);        
+        
+    },
 }
