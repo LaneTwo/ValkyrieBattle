@@ -42,11 +42,23 @@ Plane.prototype = {
                 return false;
             }
         } else if (this.orientation == PlaneOrientation.Right) {
-            
+            if((point.x == this.point.x - 1 ) && (point.y >= this.point.y - 2 && point.y <= this.point.y + 2 ) || (point.x == this.point.x - 2) && (point.y == this.point.y) || (point.x == this.point.x - 3) && (point.y >= this.point.y - 1 && point.y <= this.point.y + 1)){
+                return true;
+            } else {
+                return false;
+            }
         } else if (this.orientation == PlaneOrientation.Bottom) {
-
+            if ((point.x >= this.point.x - 2 && point.x <= this.point.x + 2) && (point.y == this.point.y - 1) || (point.x == this.point.x) && (point.y == this.point.y - 2) || (point.x >= this.point.x -1 && point.x <= this.point.x + 1) && (point.y == this.point.y - 3)){
+                return true;
+            } else {
+                return false;
+            }
         } else {
-
+            if ((pint.x == this.point.x + 1) && (point.y >= this.point.y - 2 && poing.y <= this.point.y + 2) || (point.x == this.point.x + 2) && (point.y == this.point.y) || (point.x == this.point.x + 3) && (point.y >= this.point.y - 1 && point.y <= this.point.y + 1)) {
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 };
@@ -54,23 +66,17 @@ Plane.prototype = {
 var Game = function() {
     this.numberOfPlanes = 0;
     this.planes = [];
-    this.status = [
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0],
-    ];
+    this.status = [];
 };
 
 Game.prototype = {
     init: function() {
-        new Plane(new SVGPoint)
+        for(var i=0; i< MAP_ROW; i++) {
+            this.status[i] = new Array(MAP_COL);
+            for(var j=0; j< MAP_COL; j++) {
+                this.status[i][j] = 0;
+            }
+        }
     },
 
     addPlane: function(plane) {
