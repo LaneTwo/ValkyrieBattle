@@ -211,13 +211,128 @@ WalletWrapper.prototype = {
         // }
         var listener = function(resp) {
             localStorage.setItem("playingGameId", gameId);
-
           //console.log("createNewGame listener resp: " + resp);
         }
     
         var layoutStr = JSON.stringify(planeLayout) + salt;
         var gameHash = md5(layoutStr);
         var callFunction = "acceptGame";
+        var callArgs = "["+ gameId.toString() + "]";
+        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener
+        });
+    },
+
+    attack: function(gameId, x, y){
+        var listener = function(resp) {
+        }
+    
+        var callFunction = "attack";
+        var callArgs = "["+ gameId.toString() + ","+ x.toString()+ "," + y.toString()+ "]";
+        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener
+        });
+    },
+
+    updateAttackResult: function(gameId, result){
+        var listener = function(resp) {
+        }
+    
+        var callFunction = "updateAttackResult";
+        var callArgs = "["+ gameId.toString() + ","+ result.toString() + "]";
+        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener
+        });
+    },
+
+    requestEndGame: function(gameId, enemyGameLayout){
+        var listener = function(resp) {
+        }
+
+        var createdGameId = localStorage.setItem("createdGameId");
+        var ownGameLayout = "";
+        var salt = "";
+
+        if(createdGameId == gameId){
+            ownGameLayout =  localStorage.getItem("createdGameLayout");
+            salt =  localStorage.getItem("createdGameSalt");
+        }else{
+            ownGameLayout =  localStorage.getItem("challengeGameLayout");
+            salt =  localStorage.getItem("challengeGameSalt"); 
+        }
+    
+        var callFunction = "requestEndGame";
+        var callArgs = "["+ gameId.toString() + ",\""+ JSON.stringify(enemyGameLayout) + "\"," +
+            ",\""+ JSON.stringify(ownGameLayout) + "\"," + ",\""+ salt.toString() + "\"]";
+        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener
+        });
+    },
+
+    challengeEnemy: function(gameId, ownGameLayout, salt){
+        var listener = function(resp) {
+        }
+
+        var createdGameId = localStorage.setItem("createdGameId");
+        var ownGameLayout = "";
+        var salt = "";
+
+        if(createdGameId == gameId){
+            ownGameLayout =  localStorage.getItem("createdGameLayout");
+            salt =  localStorage.getItem("createdGameSalt");
+        }else{
+            ownGameLayout =  localStorage.getItem("challengeGameLayout");
+            salt =  localStorage.getItem("challengeGameSalt"); 
+        }
+    
+        var callFunction = "requestEndGame";
+        var callArgs = "["+ gameId.toString() + ",\""+ JSON.stringify(enemyGameLayout) + "\"," +
+            ",\""+ JSON.stringify(ownGameLayout) + "\"," + ",\""+ salt.toString() + "\"]";
+        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener
+        });
+    },
+
+    surrenderGame: function(gameId){
+        var listener = function(resp) {
+        }
+    
+        var callFunction = "surrenderGame";
+        var callArgs = "["+ gameId.toString() + "]";
+        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener
+        });
+    },
+   
+    surrenderGame: function(gameId){
+        var listener = function(resp) {
+        }
+    
+        var callFunction = "updateTimeoutGameResult";
         var callArgs = "["+ gameId.toString() + "]";
         serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
             qrcode: {
