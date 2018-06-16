@@ -45,6 +45,8 @@ ValkyrieBattleContract.prototype = {
         });
 
         this.matchCount = this.matchCount + 1;
+
+        return this.matchCount - 1;
     },
 
     matchGame: function(gameId, gameHash){
@@ -317,6 +319,32 @@ ValkyrieBattleContract.prototype = {
         }
 
         return unmatchedGames;
+    },
+
+    getUserCurrentOpenGame: function(){
+        var gameFound = false;
+        var openGame = { gameId: -1, isCreator: false};
+        for(var i = 0; i < this.matchCount; i++){
+            var game = this.matches.get(i);
+            
+            if(game.state !== "GameEnded"){
+                if(game.playerAddress[0] === Blockchain.transaction.from){
+                    openGame.gameId = i;
+                    openGame.isCreator = true;
+                    gameFound = true;
+                }else if(game.playerAddress[1] === Blockchain.transaction.from){
+                    openGame.gameId = i;
+                    openGame.isCreator = false;
+                    gameFound = true;
+                }
+            }
+
+            if(gameFound){
+                break;
+            }
+        }
+
+        return openGame;
     },
 
     getGame: function(gameId){
