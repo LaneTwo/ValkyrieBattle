@@ -1,10 +1,11 @@
 
 WalletWrapper = function(){
-    this.contractAddress = "n22pDZey7p4Sjxz7gRGnL2xGhv6cJwd93nW";
+    this.contractAddress = "n1xduSZspy9w5s9B94qarEpE8FgnNjD77hT";
     var NebPay = require("nebpay");
     //this.callbackUrl = NebPay.config.mainnetUrl;    
     this.callbackUrl = NebPay.config.testnetUrl;
     this.nebPay = new NebPay();
+    this.timer = null;
 }
 
 WalletWrapper.prototype = {
@@ -170,16 +171,32 @@ WalletWrapper.prototype = {
         // }, 20000);  
 
 
-        setTimeout(() => {
-            this.getUserCurrentOpenGame(function(result){
-                if(result.gameId >= 0){
-                    localStorage.setItem("createdGameId", result.gameId);
-                    localStorage.setItem("createdGameLayout", JSON.stringify(planeLayout));
-                    localStorage.setItem("createdGameSalt", salt);
-                }
-            })
-        }, 20000);
+
+        this.queryCreatedGame(planeLayout, salt);
+        // setTimeout(() => {
+        //     this.getUserCurrentOpenGame(function(result){
+        //         if(result.gameId >= 0){
+        //             localStorage.setItem("createdGameId", result.gameId);
+        //             localStorage.setItem("createdGameLayout", JSON.stringify(planeLayout));
+        //             localStorage.setItem("createdGameSalt", salt);
+        //         }
+        //     })
+        // }, 5000);
         
+    },
+
+    queryCreatedGame: function(planeLayout, salt){
+        this.getUserCurrentOpenGame(result => {
+            if(result.gameId >= 0){
+                localStorage.setItem("createdGameId", result.gameId);
+                localStorage.setItem("createdGameLayout", JSON.stringify(planeLayout));
+                localStorage.setItem("createdGameSalt", salt);
+                clearTimeout(this.timer);
+            }
+        });
+        this.timer = setTimeout(() => {
+            this.queryCreatedGame(planeLayout, salt);
+        }, 3000);
     },
 
     matchGame: function(gameId, planeLayout, salt){
