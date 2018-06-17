@@ -205,8 +205,69 @@ Game.prototype = {
     }, 
     
     shootAt: function(point) {
+        if (point.x < 0 || point.x >= MAP_COL || point.y < 0  || point.y >= MAP_ROW) {
+            console.log("涉及超出范围.");
+            return;
+        }
+        
         for(var i=0;i<this.planes.length;i++) {
-            
+            if (this.planes[i].isCrash(point)) {
+                console.log("飞机被击毁.");
+                if (this.planes[i].orientation == PlaneOrientation.Top) {
+                    this.status[point.x][point.y] = 0;
+                    this.status[point.x - 2][point.y + 1] = 0;
+                    this.status[point.x - 1][point.y + 1] = 0;
+                    this.status[point.x][point.y + 1] = 0;
+                    this.status[point.x + 1][point.y + 1] = 0;
+                    this.status[point.x + 2][point.y + 1] = 0;
+                    this.status[point.x][point.y + 2] = 0;
+                    this.status[point.x - 1][point.y + 3] = 0;
+                    this.status[point.x][point.y + 3] = 0;
+                    this.status[point.x + 1][point.y + 3] = 0;
+                } else if(this.planes[i].orientation == PlaneOrientation.Right) {
+                    this.status[point.x][point.y] = 0;
+                    this.status[point.x - 1][point.y - 2] = 0;
+                    this.status[point.x - 1][point.y - 1] = 0;
+                    this.status[point.x - 1][point.y] = 0;
+                    this.status[point.x - 1][point.y + 1] = 0;
+                    this.status[point.x - 1][point.y + 2] = 0;
+                    this.status[point.x - 2][point.y] = 0;
+                    this.status[point.x - 3][point.y - 1] = 0;
+                    this.status[point.x - 3][point.y] = 0;
+                    this.status[point.x - 3][point.y + 1] = 0;
+                } else if(this.planes[i].orientation == PlaneOrientation.Bottom) {
+                    this.status[point.x][point.y] = 0;
+                    this.status[point.x - 2][point.y - 1] = 0;
+                    this.status[point.x - 1][point.y - 1] = 0;
+                    this.status[point.x][point.y - 1] = 0;
+                    this.status[point.x + 1][point.y - 1] = 0;
+                    this.status[point.x + 2][point.y - 1] = 0;
+                    this.status[point.x][point.y - 2] = 0;
+                    this.status[point.x - 1][point.y - 3] = 0;
+                    this.status[point.x][point.y - 3] = 0;
+                    this.status[point.x + 1][point.y - 3] = 0;
+                } else {
+                    this.status[point.x][point.y] = 0;
+                    this.status[point.x + 1][point.y - 2] = 0;
+                    this.status[point.x + 1][point.y - 1] = 0;
+                    this.status[point.x + 1][point.y] = 0;
+                    this.status[point.x + 1][point.y + 1] = 0;
+                    this.status[point.x + 1][point.y + 2] = 0;
+                    this.status[point.x + 2][point.y] = 0;
+                    this.status[point.x + 3][point.y - 1] = 0;
+                    this.status[point.x + 3][point.y] = 0;
+                    this.status[point.x + 3][point.y + 1] = 0;
+                }
+
+                this.planes.splice(i, 1);
+                i -= 1;
+
+            } else if (this.planes[i].isShot(point)) {
+                console.log("飞机被击伤");
+                this.status[point.x][point.y] = 2;
+            } else {
+                console.log("没有击中飞机。")
+            }
         }
     },
 
