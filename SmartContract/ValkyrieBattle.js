@@ -140,7 +140,6 @@ ValkyrieBattleContract.prototype = {
     },
 
     updateAttackResult: function(gameId, result){
-        var cannotMatchGame = false;
         var game = this.matches.get(gameId);
         if(!game){
             throw new Error("Invalid game ID.");
@@ -242,7 +241,6 @@ ValkyrieBattleContract.prototype = {
     },
 
     surrenderGame: function(gameId){
-        var cannotMatchGame = false;
         var game = this.matches.get(gameId);
         if(!game){
             throw new Error("Invalid game ID.");
@@ -267,6 +265,35 @@ ValkyrieBattleContract.prototype = {
         }
 
         this._updateGameResult(gameId, 1 - player, 0);
+    },
+
+    cancelGame: function(gameId){
+        var gameNotStarted = true;
+        var game = this.matches.get(gameId);
+        if(!game){
+            throw new Error("Invalid game ID.");
+        }
+
+        if(game.playerAddress[0] !== Blockchain.transaction.from){
+            throw new Error("Not game creator.");
+        }
+
+        if(game.state !== "WaitingForMatch"){
+            if(game.state === "WaitingForAccept"){
+                var currentTime = Math.floor(Date.now() / 1000); 
+                if(currentTime < (game.attemptToMatchTimestamp + 60)){
+                    gameNotStarted = false;
+                }
+            }else{
+                gameNotStarted = false;
+            }            
+        }
+
+        if(!gameNotStarted){
+            throw new Error("Can only cancel game not started.");
+        }
+
+        this.matches.set(gameId, null);
     },
 
     updateTimeoutGameResult: function(gameId){
@@ -306,6 +333,9 @@ ValkyrieBattleContract.prototype = {
         var unmatchedGames = [];
         for(var i = 0; i < this.matchCount; i++){
             var game = this.matches.get(i);
+            if(!game){
+                continue;
+            }
             game["players"] = [this.userNameMap.get(game.playerAddress[0]), this.userNameMap.get(game.playerAddress[1])];
 
             if(game.state === "WaitingForMatch"){
@@ -326,7 +356,9 @@ ValkyrieBattleContract.prototype = {
         var openGame = { gameId: -1, isCreator: false};
         for(var i = 0; i < this.matchCount; i++){
             var game = this.matches.get(i);
-            
+            if(!game){
+                continue;
+            }
             if(game.state !== "GameEnded"){
                 if(game.playerAddress[0] === Blockchain.transaction.from){
                     openGame.gameId = i;
@@ -360,6 +392,9 @@ ValkyrieBattleContract.prototype = {
         var games = [];
         for(var i = 0; i < this.matchCount; i++){
             var game = this.matches.get(i);
+            if(!game){
+                continue;
+            }
             game["players"] = [this.userNameMap.get(game.playerAddress[0]), this.userNameMap.get(game.playerAddress[1])];
             games.push(game);
         }

@@ -7,6 +7,12 @@
     <script src="https://cdn.jsdelivr.net/npm/nebpay.js@0.1.0/dist/nebPay.js"></script>
     <script src="walletWrapper.js"></script>
     <script src="./grid.js"></script>
+    <script src="./scenes/home.js"></script>
+    <script src="./scenes/createGame.js"></script>    
+    <script src="./scenes/acceptGame.js"></script>
+    <script src="./scenes/inGame.js"></script>
+    <script src="./scenes/listGame.js"></script>
+    <script src="./scenes/leaderboard.js"></script>
 </head>
 <body>
 
@@ -17,11 +23,12 @@
             backgroundColor: '#cea77d',
             width: 1024,
             height: 800,
-            scene: {
-                preload: preload,
-                create: create,
-                update: update
-            }
+            scene: [SceneHome, SceneCreateGame, SceneAcceptGame, SceneInGame, SceneListGame, SceneLeaderboard]
+            // {
+            //     preload: preload,
+            //     create: create,
+            //     update: update
+            // }
         };    
 
         var game = new Phaser.Game(config);
