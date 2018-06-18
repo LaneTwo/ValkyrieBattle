@@ -26,45 +26,75 @@
 
         var game = new Phaser.Game(config);
 
-        var planes = [];
-        var keySpace;
+        var cursors, selectedPlane;
+
         function preload () {
             this.load.image("plane", "images/plane.jpeg");
         }
         
         function create () {
             var SELF = this;
+
             this.add.text(250, 5, 'Mine Planes', { font: '16px Courier', fill: '#ffffff' });
             this.add.text(700, 5, 'Enemy Planes', { font: '16px Courier', fill: '#ffffff' });
 
-            drawGrid(400, 400, this.add.graphics({x: 100, y: 30}))
-            drawGrid(400, 400, this.add.graphics({x: 550, y: 30}))
+            var mineGrid = drawGrid(400, 400, this.add.graphics({x: 100, y: 30}));
+            var enemyGrid = drawGrid(400, 400, this.add.graphics({x: 550, y: 30}));
 
-            var plane = new Plane(this, 50, 70);
-            planes.push(plane);
-            this.children.add(plane);
+            //  A drop zone
+            var zone = this.add.zone(290, 205, 400, 400).setDropZone();
+            zone.input.dropZone = true;
 
-            plane.setInteractive();
-            this.input.setDraggable(plane);
+            var plane1 = new Plane(this, 50, 70).setInteractive();
+            var plane2 = new Plane(this, 50, 70).setInteractive();
+            var plane3 = new Plane(this, 50, 70).setInteractive();
+
+            this.children.add(plane1);
+            this.children.add(plane2);
+            this.children.add(plane3);
+
+            this.input.setDraggable(plane1);
+            this.input.setDraggable(plane2);
+            this.input.setDraggable(plane3);
 
             this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-
-                if (planes.length >= 3) {
-                    gameObject.x = dragX;
-                    gameObject.y = dragY;
-                } else {
-                    var p = new Plane(SELF, dragX, dragY);
-                    p.setInteractive();
-                    SELF.input.setDraggable(p);
-                    planes.push(p);
-                    SELF.children.add(p);
-                }
+                
+                gameObject.x = dragX;
+                gameObject.y = dragY;
+                
             });
 
-            keySpace = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+            this.input.on('dragend', function (pointer, gameObject, dropped) {
+        
+                if (!dropped) {
+                    gameObject.x = gameObject.input.dragStartX;
+                    gameObject.y = gameObject.input.dragStartY;
+                }
+
+                selectedPlane = gameObject;
+                cursors = SELF.input.keyboard.createCursorKeys();
+            });
+
+            this.input.on('pointerdown', function (pointer) {
+
+                console.log(pointer);
+
+            }, this);
+
+
         }
 
         function update () {
+
+            if (cursors && cursors.left.isDown) {
+                selectedPlane.setAngle(-90);
+            } else if (cursors && cursors.right.isDown) {
+                selectedPlane.setAngle(90);
+            } else if (cursors && cursors.up.isDown) {
+                selectedPlane.setAngle(0);
+            } else if (cursors && cursors.down.isDown) {
+                selectedPlane.setAngle(180);
+            }
 
         }
     </script>
