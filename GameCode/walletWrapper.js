@@ -1,6 +1,6 @@
 
 WalletWrapper = function(){
-    this.contractAddress = "n1xduSZspy9w5s9B94qarEpE8FgnNjD77hT";
+    this.contractAddress = "n1uLx1U5rjZS6yjTXdhB9egFYiv7X5MRajs";
     var NebPay = require("nebpay");
     //this.callbackUrl = NebPay.config.mainnetUrl;    
     this.callbackUrl = NebPay.config.testnetUrl;
@@ -345,7 +345,7 @@ WalletWrapper.prototype = {
         });
     },
    
-    surrenderGame: function(gameId){
+    updateTimeoutGameResult: function(gameId){
         var listener = function(resp) {
         }
     
@@ -359,4 +359,22 @@ WalletWrapper.prototype = {
             listener: listener
         });
     },
+
+    cancelGame: function(gameId){
+        var listener = function(resp) {
+            localStorage.setItem("createdGameId", '');
+            localStorage.setItem("createdGameLayout", '');
+            localStorage.setItem("createdGameSalt", '');
+        }
+    
+        var callFunction = "cancelGame";
+        var callArgs = "["+ gameId.toString() + "]";
+        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener
+        });
+    }
 }
