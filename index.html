@@ -42,7 +42,7 @@
             var enemyGrid = drawGrid(400, 400, this.add.graphics({x: 550, y: 30}));
 
             //  A drop zone
-            var zone = this.add.zone(290, 205, 400, 400).setDropZone();
+            var zone = this.add.zone(300, 230, 400, 400).setDropZone();
             zone.input.dropZone = true;
 
             var plane1 = new Plane(this, 50, 70).setInteractive();
@@ -75,9 +75,25 @@
                 cursors = SELF.input.keyboard.createCursorKeys();
             });
 
+            
+            // enemy area -- x: 750, y: 230, w: 400, h: 400
             this.input.on('pointerdown', function (pointer) {
+                console.log("x: ",pointer.x)
+                console.log("y: ",pointer.y)
+                var x = pointer.x;
+                var y = pointer.y;
 
-                console.log(pointer);
+                // add enemy plane status
+                if ((x > 550 && x < 950) && ( y > 30 && y < 430)) {
+
+                    var mCell = parseInt((x - 550) / 40);
+                    var nCell = parseInt((y - 30) / 40);
+
+                    var tx = (mCell * 40) + 565;
+                    var ty = (nCell * 40) + 40;
+
+                    this.add.text(tx, ty, 'x', { font: '16px Courier', fill: '#ffffff' });    
+                }
 
             }, this);
 
