@@ -7,6 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/nebpay.js@0.1.0/dist/nebPay.js"></script>
     <script src="walletWrapper.js"></script>
     <script src="./grid.js"></script>
+    <script src="util.js"></script>
     <script src="./scenes/home.js"></script>
     <script src="./scenes/createGame.js"></script>    
     <script src="./scenes/acceptGame.js"></script>
@@ -32,7 +33,7 @@
         };    
 
         var game = new Phaser.Game(config);
-
+        console.log(game);
         var cursors, selectedPlane;
 
         function preload () {

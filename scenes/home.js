@@ -7,25 +7,21 @@ var SceneHome = new Phaser.Class({
     function SceneHome ()
     {
         Phaser.Scene.call(this, { key: 'home' });
+        this.util = new Util();
     },
 
     preload: function ()
     {
         //this.load.image('face', 'assets/pics/bw-face.png');
+        this.load.image('btnCreateGamge', 'images/createGame.png');
     },
 
     create: function ()
     {
-        // this.add.sprite(400, 300, 'face').setAlpha(0.2);
-
-        // this.input.once('pointerdown', function () {
-
-        //     console.log('From SceneA to SceneB');
-
-        //     this.scene.start('sceneB');
-
-        // }, this);
-        this.scene.start('createGame');
+        this.util.addButton('btnCreateGamge', 512, 400, function(event, scope){ 
+            scope.scene.start('createGame');
+        }, this, this);
+        
     },
     update: function (time, delta)
     {
