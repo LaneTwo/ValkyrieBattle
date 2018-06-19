@@ -25,102 +25,11 @@
             width: 1024,
             height: 800,
             scene: [SceneHome, SceneCreateGame, SceneAcceptGame, SceneInGame, SceneListGame, SceneLeaderboard]
-            // {
-            //     preload: preload,
-            //     create: create,
-            //     update: update
-            // }
         };    
 
         var game = new Phaser.Game(config);
         console.log(game);
-        var cursors, selectedPlane;
 
-        function preload () {
-            this.load.image("plane", "images/plane.jpeg");
-        }
-        
-        function create () {
-            var SELF = this;
-
-            this.add.text(250, 5, 'Mine Planes', { font: '16px Courier', fill: '#ffffff' });
-            this.add.text(700, 5, 'Enemy Planes', { font: '16px Courier', fill: '#ffffff' });
-
-            var mineGrid = drawGrid(400, 400, this.add.graphics({x: 100, y: 30}));
-            var enemyGrid = drawGrid(400, 400, this.add.graphics({x: 550, y: 30}));
-
-            //  A drop zone
-            var zone = this.add.zone(300, 230, 400, 400).setDropZone();
-            zone.input.dropZone = true;
-
-            var plane1 = new Plane(this, 50, 70).setInteractive();
-            var plane2 = new Plane(this, 50, 70).setInteractive();
-            var plane3 = new Plane(this, 50, 70).setInteractive();
-
-            this.children.add(plane1);
-            this.children.add(plane2);
-            this.children.add(plane3);
-
-            this.input.setDraggable(plane1);
-            this.input.setDraggable(plane2);
-            this.input.setDraggable(plane3);
-
-            this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
-                
-                gameObject.x = dragX;
-                gameObject.y = dragY;
-                
-            });
-
-            this.input.on('dragend', function (pointer, gameObject, dropped) {
-        
-                if (!dropped) {
-                    gameObject.x = gameObject.input.dragStartX;
-                    gameObject.y = gameObject.input.dragStartY;
-                }
-
-                selectedPlane = gameObject;
-                cursors = SELF.input.keyboard.createCursorKeys();
-            });
-
-            
-            // enemy area -- x: 750, y: 230, w: 400, h: 400
-            this.input.on('pointerdown', function (pointer) {
-                console.log("x: ",pointer.x)
-                console.log("y: ",pointer.y)
-                var x = pointer.x;
-                var y = pointer.y;
-
-                // add enemy plane status
-                if ((x > 550 && x < 950) && ( y > 30 && y < 430)) {
-
-                    var mCell = parseInt((x - 550) / 40);
-                    var nCell = parseInt((y - 30) / 40);
-
-                    var tx = (mCell * 40) + 565;
-                    var ty = (nCell * 40) + 40;
-
-                    this.add.text(tx, ty, 'x', { font: '16px Courier', fill: '#ffffff' });    
-                }
-
-            }, this);
-
-
-        }
-
-        function update () {
-
-            if (cursors && cursors.left.isDown) {
-                selectedPlane.setAngle(-90);
-            } else if (cursors && cursors.right.isDown) {
-                selectedPlane.setAngle(90);
-            } else if (cursors && cursors.up.isDown) {
-                selectedPlane.setAngle(0);
-            } else if (cursors && cursors.down.isDown) {
-                selectedPlane.setAngle(180);
-            }
-
-        }
     </script>
 
     <div id="canvas"></div>

@@ -60,7 +60,23 @@ var SceneCreateGame = new Phaser.Class({
 
         this.input.on('pointerdown', function (pointer) {
 
-            console.log(pointer);
+            console.log("x: ",pointer.x)
+            console.log("y: ",pointer.y)
+            var x = pointer.x;
+            var y = pointer.y;
+
+            // add enemy plane status
+            if ((x > 550 && x < 950) && ( y > 30 && y < 430)) {
+
+                var mCell = parseInt((x - 550) / 40);
+                var nCell = parseInt((y - 30) / 40);
+
+                var tx = (mCell * 40) + 565;
+                var ty = (nCell * 40) + 40;
+
+                this.add.text(tx, ty, 'x', { font: '16px Courier', fill: '#ffffff' });    
+            }
+
 
         }, this);
 
