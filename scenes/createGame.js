@@ -12,7 +12,7 @@ var SceneCreateGame = new Phaser.Class({
 
 
     preload: function() {
-        this.load.image("plane", "images/plane.jpeg");
+        this.load.image("plane", "images/plane.png");
     },
     
     create: function() {
@@ -44,7 +44,9 @@ var SceneCreateGame = new Phaser.Class({
             
             gameObject.x = dragX;
             gameObject.y = dragY;
+            gameObject.isDragging = true;
             
+            SELF.selectedPlane = gameObject;
         });
 
         this.input.on('dragend', function (pointer, gameObject, dropped) {
@@ -54,8 +56,9 @@ var SceneCreateGame = new Phaser.Class({
                 gameObject.y = gameObject.input.dragStartY;
             }
 
-            this.selectedPlane = gameObject;
-            this.cursors = SELF.input.keyboard.createCursorKeys();
+            gameObject.isDragging = false;
+            SELF.selectedPlane = null;
+            SELF.cursors = SELF.input.keyboard.createCursorKeys();
         });
 
         this.input.on('pointerdown', function (pointer) {
@@ -64,20 +67,28 @@ var SceneCreateGame = new Phaser.Class({
 
         }, this);
 
-
+        this.input.keyboard.on('keydown_SPACE', function(event){
+            if(SELF.selectedPlane && SELF.selectedPlane.isDragging){
+                SELF.selectedPlane.setNextDirection();
+            }
+        });
     },
 
     update: function() {
 
-        if (this.cursors && this.cursors.left.isDown) {
-            this.selectedPlane.setAngle(-90);
-        } else if (this.cursors && this.cursors.right.isDown) {
-            this.selectedPlane.setAngle(90);
-        } else if (this.cursors && this.cursors.up.isDown) {
-            this.selectedPlane.setAngle(0);
-        } else if (this.cursors && this.cursors.down.isDown) {
-            this.selectedPlane.setAngle(180);
+        if(this.selectedPlane){
+            this.selectedPlane.setAngle(this.selectedPlane.getAngle());
         }
+        
+        // if (this.cursors && this.cursors.left.isDown) {
+        //     this.selectedPlane.setAngle(-90);
+        // } else if (this.cursors && this.cursors.right.isDown) {
+        //     this.selectedPlane.setAngle(90);
+        // } else if (this.cursors && this.cursors.up.isDown) {
+        //     this.selectedPlane.setAngle(0);
+        // } else if (this.cursors && this.cursors.down.isDown) {
+        //     this.selectedPlane.setAngle(180);
+        // }
 
     }
 });
