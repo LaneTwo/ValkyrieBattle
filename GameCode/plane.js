@@ -10,7 +10,22 @@ var Plane = new Phaser.Class({
 
         this.setTexture('plane');
         this.setPosition(x, y);
-        this.setScale(0.3);
+        //this.setScale(0.3);
+
+        this.isDragging = false;
+        this.direction = 0;
+    },
+
+    setNextDirection:function (){
+        this.direction++;
+        if(this.direction >= 4){
+            this.direction = 0;
+        }
+    },
+
+    getAngle: function(){
+        return this.direction * 90;
     }
+
 
 });
