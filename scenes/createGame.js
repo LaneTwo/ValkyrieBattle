@@ -28,13 +28,14 @@ var SceneCreateGame = new Phaser.Class({
         var zone = this.add.zone(290, 205, 400, 400).setDropZone();
         zone.input.dropZone = true;
 
-        var plane1 = new Plane(this, 50, 70).setInteractive();
-        var plane2 = new Plane(this, 50, 70).setInteractive();
-        var plane3 = new Plane(this, 50, 70).setInteractive();
+        var plane1 = new PlaneSprite(this, 50, 70).setInteractive();
+        var plane2 = new PlaneSprite(this, 50, 70).setInteractive();
+        var plane3 = new PlaneSprite(this, 50, 70).setInteractive();
 
         this.children.add(plane1);
         this.children.add(plane2);
         this.children.add(plane3);
+        this.planes = [plane1, plane2, plane3];
 
         this.input.setDraggable(plane1);
         this.input.setDraggable(plane2);
@@ -55,7 +56,8 @@ var SceneCreateGame = new Phaser.Class({
                 gameObject.x = gameObject.input.dragStartX;
                 gameObject.y = gameObject.input.dragStartY;
             }
-
+            console.log(gameObject.x + "," + gameObject.y);
+            gameObject.updateGridPosition(gameObject.x - 100, gameObject.y - 30);
             gameObject.isDragging = false;
             SELF.selectedPlane = null;
             SELF.cursors = SELF.input.keyboard.createCursorKeys();
@@ -94,6 +96,17 @@ var SceneCreateGame = new Phaser.Class({
 
         if(this.selectedPlane){
             this.selectedPlane.setAngle(this.selectedPlane.getAngle());
+        }
+
+        for(var i = 0; i < this.planes.length; i++){
+            if(this.planes[i].isDragging){
+                continue;
+            }
+            var pos = this.planes[i].getDrawPosition();
+            if(pos.x >= 0 && pos.y >= 0){
+                this.planes[i].x = pos.x + 100;
+                this.planes[i].y = pos.y + 30;
+            }
         }
         
         // if (this.cursors && this.cursors.left.isDown) {
