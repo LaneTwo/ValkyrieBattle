@@ -12,13 +12,23 @@ var SceneCreateGame = new Phaser.Class({
         this.createdGame.init();
         this.util = new Util();
         this.wallet = new WalletWrapper();
-        
+        this.matchGame = false;
+        this.matchGameId = -1;    
     },
 
-
+    init: function(param){
+        console.log('------------->');
+        if(param.matchGame){
+            this.matchGame = true;
+            this.matchGameId = param.gameId;
+        }else{
+            this.matchGame = false;
+        }
+    },
     preload: function() {
         this.load.image("plane", "images/plane.png");
         this.load.image('btnCreateGamge', 'images/createGame.png');
+        this.load.image('btnMatchGamge', 'images/matchGame.png');
     },
     
     create: function() {
@@ -39,14 +49,13 @@ var SceneCreateGame = new Phaser.Class({
         this.planes.push(new PlaneSprite(this, 50, 70).setInteractive());
         this.planes.push(new PlaneSprite(this, 50, 70).setInteractive());
 
-        var previousCreatedGame = SELF.wallet.loadCreatedGame();
-        if(previousCreatedGame.gameId < 0){
-            SELF.createGameBtn = this.util.addButton('btnCreateGamge', 300, 500, function(event, scope){ 
+        if(SELF.matchGame){
+            SELF.matchGameBtn = this.util.addButton('btnMatchGamge', 300, 500, function(event, scope){ 
                 //scope.scene.start('createGame');
-                console.log('create game');
-                SELF.createGameBtn.destroy();
+                console.log('match game');
+                SELF.matchGameBtn.destroy();
                 
-                SELF.wallet.createNewGame(SELF.createdGame.planes, "1", function(){});
+                //SELF.wallet.matchGame(SELF.matchGameId ,SELF.createdGame.planes, "1");
             }, this, this);
 
             //Initialize plane position
@@ -55,9 +64,26 @@ var SceneCreateGame = new Phaser.Class({
             this.planes[2].plane.point = {x: 2, y:9};
             this.planes[2].plane.orientation = PlaneOrientation.Bottom;
         }else{
-            this.planes[0].plane = previousCreatedGame.planeLayout[0];
-            this.planes[1].plane = previousCreatedGame.planeLayout[1];
-            this.planes[2].plane = previousCreatedGame.planeLayout[2];
+            var previousCreatedGame = SELF.wallet.loadCreatedGame();
+            if(previousCreatedGame.gameId < 0){
+                SELF.createGameBtn = this.util.addButton('btnCreateGamge', 300, 500, function(event, scope){ 
+                    //scope.scene.start('createGame');
+                    console.log('create game');
+                    SELF.createGameBtn.destroy();
+                    
+                    SELF.wallet.createNewGame(SELF.createdGame.planes, "1", function(){});
+                }, this, this);
+    
+                //Initialize plane position
+                this.planes[0].plane.point = {x: 2, y:0};
+                this.planes[1].plane.point = {x: 7, y:0};
+                this.planes[2].plane.point = {x: 2, y:9};
+                this.planes[2].plane.orientation = PlaneOrientation.Bottom;
+            }else{
+                this.planes[0].plane = previousCreatedGame.planeLayout[0];
+                this.planes[1].plane = previousCreatedGame.planeLayout[1];
+                this.planes[2].plane = previousCreatedGame.planeLayout[2];
+            }
         }
 
 

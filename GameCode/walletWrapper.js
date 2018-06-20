@@ -64,7 +64,7 @@ WalletWrapper.prototype = {
     getUnmatchedGame: function(callback){
         var listener = function(resp) {
           //console.log("getUnmatchedGame listener resp: " + resp);
-          callback(resp.result);
+          callback(JSON.parse(resp.result));
         }
     
         var callFunction = "getUnmatchedGame";
