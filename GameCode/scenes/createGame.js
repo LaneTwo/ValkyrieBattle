@@ -10,7 +10,8 @@ var SceneCreateGame = new Phaser.Class({
         this.selectedPlane;
 
         this.graphics;
-
+        this.timerEvent;
+        this.clockSize = 30;
         this.createdGame = new Game();
         this.createdGame.init();
         this.util = new Util();
@@ -27,6 +28,7 @@ var SceneCreateGame = new Phaser.Class({
         var SELF = this;
 
         this.graphics = this.add.graphics({ x: 0, y: 0 });
+        this.timerEvent = this.time.addEvent({ delay: 5000, timeScale: 0.5 });
 
         this.add.text(250, 5, 'Mine Planes', { font: '16px Courier', fill: '#ffffff' });
         this.add.text(700, 5, 'Enemy Planes', { font: '16px Courier', fill: '#ffffff' });
@@ -64,7 +66,6 @@ var SceneCreateGame = new Phaser.Class({
             this.planes[2].plane = previousCreatedGame.planeLayout[2];
         }
 
-
         this.children.add(this.planes[0]);
         this.children.add(this.planes[1]);
         this.children.add(this.planes[2]);
@@ -93,7 +94,6 @@ var SceneCreateGame = new Phaser.Class({
             console.log(gameObject.x + "," + gameObject.y);
             gameObject.updateGridPosition(gameObject.x - 100, gameObject.y - 30);
 
-            
             // if(!SELF.createdGame.addPlane(gameObject.plane)){
             //     gameObject.x = gameObject.input.dragStartX;
             //     gameObject.y = gameObject.input.dragStartY;
@@ -108,8 +108,6 @@ var SceneCreateGame = new Phaser.Class({
 
         this.input.on('pointerdown', function (pointer) {
 
-            console.log("x: ",pointer.x)
-            console.log("y: ",pointer.y)
             var x = pointer.x;
             var y = pointer.y;
 
@@ -118,13 +116,12 @@ var SceneCreateGame = new Phaser.Class({
 
                 var mCell = parseInt((x - 550) / 40);
                 var nCell = parseInt((y - 30) / 40);
-
+                console.log("m: " + mCell + ", n: " + nCell)
                 var tx = (mCell * 40) + 565;
                 var ty = (nCell * 40) + 40;
-
+                
                 this.add.text(tx, ty, 'x', { font: '16px Courier', fill: '#ffffff' });    
             }
-
 
         }, this);
 
@@ -168,7 +165,10 @@ var SceneCreateGame = new Phaser.Class({
             }
             this.planes[i].setAngle(this.planes[i].getAngle());
         }
-        
+            this.graphics.clear();
+
+            this.drawClock(50, 50, this.timerEvent);
+
         // if (this.cursors && this.cursors.left.isDown) {
         //     this.selectedPlane.setAngle(-90);
         // } else if (this.cursors && this.cursors.right.isDown) {
@@ -185,8 +185,8 @@ var SceneCreateGame = new Phaser.Class({
         //  Progress is between 0 and 1, where 0 = the hand pointing up and then rotating clockwise a full 360
 
         //  The frame
-        graphics.lineStyle(3, 0xffffff, 1);
-        graphics.strokeCircle(x, y, clockSize);
+        this.graphics.lineStyle(3, 0xffffff, 1);
+        this.graphics.strokeCircle(x, y, this.clockSize);
 
         var angle;
         var dest;
@@ -224,30 +224,30 @@ var SceneCreateGame = new Phaser.Class({
         }
 
         //  The current iteration hand
-        size = clockSize * 0.95;
+        size = this.clockSize * 0.95;
 
         angle = (360 * timer.getProgress()) - 90;
         dest = Phaser.Math.RotateAroundDistance({ x: x, y: y }, x, y, Phaser.Math.DegToRad(angle), size);
 
-        graphics.lineStyle(2, 0xffff00, 1);
+        this.graphics.lineStyle(2, 0xffff00, 1);
 
-        graphics.beginPath();
+        this.graphics.beginPath();
 
-        graphics.moveTo(x, y);
+        this.graphics.moveTo(x, y);
 
         p1 = Phaser.Math.RotateAroundDistance({ x: x, y: y }, x, y, Phaser.Math.DegToRad(angle - 5), size * 0.7);
 
-        graphics.lineTo(p1.x, p1.y);
-        graphics.lineTo(dest.x, dest.y);
+        this.graphics.lineTo(p1.x, p1.y);
+        this.graphics.lineTo(dest.x, dest.y);
 
-        graphics.moveTo(x, y);
+        this.graphics.moveTo(x, y);
 
         p2 = Phaser.Math.RotateAroundDistance({ x: x, y: y }, x, y, Phaser.Math.DegToRad(angle + 5), size * 0.7);
 
-        graphics.lineTo(p2.x, p2.y);
-        graphics.lineTo(dest.x, dest.y);
+        this.graphics.lineTo(p2.x, p2.y);
+        this.graphics.lineTo(dest.x, dest.y);
 
-        graphics.strokePath();
-        graphics.closePath();
+        this.graphics.strokePath();
+        this.graphics.closePath();
     }
 });
