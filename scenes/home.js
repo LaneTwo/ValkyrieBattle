@@ -22,13 +22,13 @@ var SceneHome = new Phaser.Class({
 
     create: function ()
     {
-        this.util.addButton('btnCreateGamge', 512, 400, function(event, scope){ 
+        this.util.addButton('btnCreateGamge', 512, 200, function(event, scope){ 
             scope.scene.start('createGame');
         }, this, this);
-        this.util.addButton('btnListGamge', 512, 400, function(event, scope){ 
+        this.util.addButton('btnListGamge', 512, 270, function(event, scope){ 
             scope.scene.start('listGame');
         }, this, this);
-        this.util.addButton('btnLeaderboard', 512, 400, function(event, scope){ 
+        this.util.addButton('btnLeaderboard', 512, 340, function(event, scope){ 
             scope.scene.start('leaderboard');
         }, this, this);
         
