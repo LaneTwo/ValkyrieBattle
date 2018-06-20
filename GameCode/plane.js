@@ -13,41 +13,40 @@ var PlaneSprite = new Phaser.Class({
         //this.setScale(0.3);
 
         this.isDragging = false;
-        this.direction = 0;
         this.plane = new Plane({x:-1, y:-1}, 0);
     },
 
     setNextDirection:function (){
-        this.direction++;
-        if(this.direction >= 4){
-            this.direction = 0;
+        var orientation = this.plane.orientation + 1;
+        if(orientation >= 4){
+            orientation = 0;
         }
 
-        this.plane.orientation = this.direction;
+        this.plane.orientation = orientation;
     },
 
     getAngle: function(){
-        return this.direction * 90;
+        return this.plane.orientation * 90;
     },
 
     updateGridPosition: function(x, y){
         var centerOffsetX = 0;
         var centerOffsetY = 0;
 
-        switch(this.direction){
-            case 0:
+        switch(this.plane.orientation){
+            case PlaneOrientation.Top:
                 centerOffsetX = 0;
                 centerOffsetY = -60;
                 break;
-            case 1:
+            case PlaneOrientation.Right:
                 centerOffsetX = 60;
                 centerOffsetY = 0;
                 break;
-            case 2:
+            case PlaneOrientation.Bottom:
                 centerOffsetX = 0;
                 centerOffsetY = 60;
                 break;
-            case 3:
+            case PlaneOrientation.Left:
                 centerOffsetX = -60;
                 centerOffsetY = 0;
                 break;                                                          
@@ -73,20 +72,20 @@ var PlaneSprite = new Phaser.Class({
         if(this.plane.point.x >= 0 && this.plane.point.y >= 0){
             position.x = this.plane.point.x * 40;
             position.y = this.plane.point.y * 40;
-            switch(this.direction){
-                case 0:
+            switch(this.plane.orientation){
+                case PlaneOrientation.Top:
                     position.x += 20;
                     position.y += 80;
                     break;
-                case 1:
+                case PlaneOrientation.Right:
                     position.x -= 40;
                     position.y += 20;
                     break;
-                case 2:
+                case PlaneOrientation.Bottom:
                     position.x += 20;
                     position.y -= 40;
                     break;
-                case 3:
+                case PlaneOrientation.Left:
                     position.x += 80;
                     position.y += 20;
                     break;                                                          
