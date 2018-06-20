@@ -79,6 +79,11 @@ Game.prototype = {
         }
     },
 
+    // TODO: check planes position
+    updatePlanePosition(planes){        
+        this.planes = planes;
+        return true;
+    },
     addPlane: function(plane) {
         if (this.planes.length == MAX_PLAN_NUM) {
             console.log("飞机数量已达上限，无法继续添加。");
