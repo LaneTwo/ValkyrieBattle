@@ -185,6 +185,24 @@ WalletWrapper.prototype = {
         
     },
 
+    loadCreatedGame:function(){
+        var createdGame = {
+            gameId: -1,
+            planeLayout: "",
+            salt: ""
+        }
+        var gameId = localStorage.getItem("createdGameId");
+        var planeLayout = localStorage.getItem("createdGameLayout");
+        var salt = localStorage.getItem("createdGameSalt");
+        if(gameId && planeLayout){
+            createdGame.gameId = gameId;
+            createdGame.planeLayout = JSON.parse(planeLayout); 
+            createdGame.salt = "";
+        }
+
+        return createdGame;
+    },
+
     queryCreatedGame: function(planeLayout, salt){
         this.getUserCurrentOpenGame(result => {
             if(result.gameId >= 0){
