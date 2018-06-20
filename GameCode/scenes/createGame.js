@@ -10,11 +10,15 @@ var SceneCreateGame = new Phaser.Class({
         this.selectedPlane;
         this.createdGame = new Game();
         this.createdGame.init();
+        this.util = new Util();
+        this.wallet = new WalletWrapper();
+        
     },
 
 
     preload: function() {
         this.load.image("plane", "images/plane.png");
+        this.load.image('btnCreateGamge', 'images/createGame.png');
     },
     
     create: function() {
@@ -30,26 +34,42 @@ var SceneCreateGame = new Phaser.Class({
         var zone = this.add.zone(290, 205, 400, 400).setDropZone();
         zone.input.dropZone = true;
 
-        var plane1 = new PlaneSprite(this, 50, 70).setInteractive();
-        var plane2 = new PlaneSprite(this, 50, 70).setInteractive();
-        var plane3 = new PlaneSprite(this, 50, 70).setInteractive();
+        this.planes = [];
+        this.planes.push(new PlaneSprite(this, 50, 70).setInteractive());
+        this.planes.push(new PlaneSprite(this, 50, 70).setInteractive());
+        this.planes.push(new PlaneSprite(this, 50, 70).setInteractive());
 
-        //Initialize plane position
-        plane1.plane.point = {x: 2, y:0};
-        plane2.plane.point = {x: 7, y:0};
-        plane3.plane.point = {x: 2, y:9};
-        plane3.plane.orientation = PlaneOrientation.Bottom;
+        var previousCreatedGame = SELF.wallet.loadCreatedGame();
+        if(previousCreatedGame.gameId < 0){
+            SELF.createGameBtn = this.util.addButton('btnCreateGamge', 300, 500, function(event, scope){ 
+                //scope.scene.start('createGame');
+                console.log('create game');
+                SELF.createGameBtn.destroy();
+                
+                SELF.wallet.createNewGame(SELF.createdGame.planes, "1", function(){});
+            }, this, this);
 
-        this.children.add(plane1);
-        this.children.add(plane2);
-        this.children.add(plane3);
-        this.planes = [plane1, plane2, plane3];
+            //Initialize plane position
+            this.planes[0].plane.point = {x: 2, y:0};
+            this.planes[1].plane.point = {x: 7, y:0};
+            this.planes[2].plane.point = {x: 2, y:9};
+            this.planes[2].plane.orientation = PlaneOrientation.Bottom;
+        }else{
+            this.planes[0].plane = previousCreatedGame.planeLayout[0];
+            this.planes[1].plane = previousCreatedGame.planeLayout[1];
+            this.planes[2].plane = previousCreatedGame.planeLayout[2];
+        }
+
+
+        this.children.add(this.planes[0]);
+        this.children.add(this.planes[1]);
+        this.children.add(this.planes[2]);
 
         this.updateGame();
 
-        this.input.setDraggable(plane1);
-        this.input.setDraggable(plane2);
-        this.input.setDraggable(plane3);
+        this.input.setDraggable(this.planes[0]);
+        this.input.setDraggable(this.planes[1]);
+        this.input.setDraggable(this.planes[2]);
 
         this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
             
