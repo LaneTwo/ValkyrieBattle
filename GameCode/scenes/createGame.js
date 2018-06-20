@@ -54,7 +54,17 @@ var SceneCreateGame = new Phaser.Class({
                 //scope.scene.start('createGame');
                 console.log('match game');
                 SELF.matchGameBtn.destroy();
-                
+                SELF.matchTimer = this.time.addEvent(
+                    { 
+                        delay: 5000,
+                        loop:true, 
+                        callback: function(){
+                            SELF.wallet.getGame(SELF.matchGameId, gameDetail =>{
+                                console.log(gameDetail);
+                            })
+                        }, 
+                        callbackScope: this
+                    });
                 //SELF.wallet.matchGame(SELF.matchGameId ,SELF.createdGame.planes, "1");
             }, this, this);
 
@@ -63,6 +73,9 @@ var SceneCreateGame = new Phaser.Class({
             this.planes[1].plane.point = {x: 7, y:0};
             this.planes[2].plane.point = {x: 2, y:9};
             this.planes[2].plane.orientation = PlaneOrientation.Bottom;
+
+
+            //this.sys.game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, function(){console.log("timer repeat")}, this);
         }else{
             var previousCreatedGame = SELF.wallet.loadCreatedGame();
             if(previousCreatedGame.gameId < 0){
@@ -71,7 +84,20 @@ var SceneCreateGame = new Phaser.Class({
                     console.log('create game');
                     SELF.createGameBtn.destroy();
                     
-                    SELF.wallet.createNewGame(SELF.createdGame.planes, "1", function(){});
+                    SELF.wallet.createNewGame(SELF.createdGame.planes, "1", function(gameId){
+                        SELF.createdGameId = gameId;
+                        SELF.matchTimer = this.time.addEvent(
+                            { 
+                                delay: 5000,
+                                loop:true, 
+                                callback: function(){
+                                    SELF.wallet.getGame(SELF.createdGameId, gameDetail =>{
+                                        console.log(gameDetail);
+                                    })
+                                }, 
+                                callbackScope: this
+                            });
+                    });
                 }, this, this);
     
                 //Initialize plane position
@@ -83,7 +109,22 @@ var SceneCreateGame = new Phaser.Class({
                 this.planes[0].plane = previousCreatedGame.planeLayout[0];
                 this.planes[1].plane = previousCreatedGame.planeLayout[1];
                 this.planes[2].plane = previousCreatedGame.planeLayout[2];
+
+                SELF.createdGameId = previousCreatedGame.gameId;
+                SELF.matchTimer = this.time.addEvent(
+                    { 
+                        delay: 5000,
+                        loop:true, 
+                        callback: function(){
+                            SELF.wallet.getGame(SELF.createdGameId, gameDetail =>{
+                                console.log(gameDetail);
+                            })
+                        }, 
+                        callbackScope: this
+                    });
             }
+
+
         }
 
 
