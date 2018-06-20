@@ -123,6 +123,9 @@ var SceneCreateGame = new Phaser.Class({
                 this.add.text(tx, ty, 'x', { font: '16px Courier', fill: '#ffffff' });    
             }
 
+            SELF.graphics.clear();
+            SELF.drawClock(50, 50, SELF.timerEvent);
+
         }, this);
 
         this.input.keyboard.on('keydown_SPACE', function(event){
@@ -150,6 +153,8 @@ var SceneCreateGame = new Phaser.Class({
     },
     update: function() {
 
+        var SELF = this;
+
         if(this.selectedPlane){
             this.selectedPlane.setAngle(this.selectedPlane.getAngle());
         }
@@ -165,9 +170,8 @@ var SceneCreateGame = new Phaser.Class({
             }
             this.planes[i].setAngle(this.planes[i].getAngle());
         }
-            this.graphics.clear();
-
-            this.drawClock(50, 50, this.timerEvent);
+            // SELF.graphics.clear();
+            // SELF.drawClock(50, 50, SELF.timerEvent);
 
         // if (this.cursors && this.cursors.left.isDown) {
         //     this.selectedPlane.setAngle(-90);
