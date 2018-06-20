@@ -64,7 +64,7 @@ WalletWrapper.prototype = {
     getUnmatchedGame: function(callback){
         var listener = function(resp) {
           //console.log("getUnmatchedGame listener resp: " + resp);
-          callback(resp.result);
+          callback(JSON.parse(resp.result));
         }
     
         var callFunction = "getUnmatchedGame";
@@ -133,7 +133,8 @@ WalletWrapper.prototype = {
         var serialNumber;
     
         if(localStorage.getItem("createdGameId")){
-            callback("You already created a game, please wait for accept or join other's game.");
+            //callback("You already created a game, please wait for accept or join other's game.");
+            callback(-1);
             return;
         }
         var listener = function(resp) {
@@ -172,7 +173,7 @@ WalletWrapper.prototype = {
 
 
 
-        this.queryCreatedGame(planeLayout, salt);
+        this.queryCreatedGame(planeLayout, salt, callback);
         // setTimeout(() => {
         //     this.getUserCurrentOpenGame(function(result){
         //         if(result.gameId >= 0){
@@ -203,13 +204,16 @@ WalletWrapper.prototype = {
         return createdGame;
     },
 
-    queryCreatedGame: function(planeLayout, salt){
+    queryCreatedGame: function(planeLayout, salt, callback){
         this.getUserCurrentOpenGame(result => {
             if(result.gameId >= 0){
                 localStorage.setItem("createdGameId", result.gameId);
                 localStorage.setItem("createdGameLayout", JSON.stringify(planeLayout));
                 localStorage.setItem("createdGameSalt", salt);
                 clearTimeout(this.timer);
+                if(callback){
+                    callback(result.gameId);
+                }
             }
         });
         this.timer = setTimeout(() => {
