@@ -47,6 +47,7 @@ WalletWrapper.prototype = {
     getGame: function(gameId, callback){
         var listener = function(resp) {
           //console.log("getGame listener resp: " + JSON.stringify(resp));
+          console.log("getGame listener resp: " + gameId +"," + resp.result);
           callback(JSON.parse(resp.result));
         }
     
@@ -223,7 +224,7 @@ WalletWrapper.prototype = {
 
     matchGame: function(gameId, planeLayout, salt){
         var listener = function(resp) {
-            localStorage.setItem("challengeGameId", result.gameId);
+            localStorage.setItem("challengeGameId", gameId);
             localStorage.setItem("challengeGameLayout", JSON.stringify(planeLayout));
             localStorage.setItem("challengeGameSalt", salt);
         }
