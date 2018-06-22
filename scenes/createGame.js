@@ -19,7 +19,9 @@ var SceneCreateGame = new Phaser.Class({
         this.matchGame = false;
         this.matchGameId = -1; 
         this.gameState = "WaitingForMatch";
-         
+        this.playStep = 0;
+        this.playerIndex = 0;
+        this.attackStateUpdated = false;
     },
 
 
@@ -80,7 +82,7 @@ var SceneCreateGame = new Phaser.Class({
                 //     });
                 
                 SELF.wallet.matchGame(SELF.matchGameId ,SELF.createdGame.planes, "1");
-                SELF.waitForGameMatch();
+                SELF.monitorGameStateChange();
             }, this, this);
 
             //Initialize plane position
@@ -101,17 +103,19 @@ var SceneCreateGame = new Phaser.Class({
                     
                     SELF.wallet.createNewGame(SELF.createdGame.planes, "1", function(gameId){
                         SELF.createdGameId = gameId;
-                        SELF.matchTimer = SELF.time.addEvent(
-                            { 
-                                delay: 5000,
-                                loop:true, 
-                                callback: function(){
-                                    SELF.wallet.getGame(SELF.createdGameId, gameDetail =>{
-                                        console.log(gameDetail);
-                                    })
-                                }, 
-                                callbackScope: SELF
-                            });
+                        SELF.gameState = "WaitingForMatch";
+                        SELF.monitorGameStateChange();
+                        // SELF.matchTimer = SELF.time.addEvent(
+                        //     { 
+                        //         delay: 5000,
+                        //         loop:true, 
+                        //         callback: function(){
+                        //             SELF.wallet.getGame(SELF.createdGameId, gameDetail =>{
+                        //                 console.log(gameDetail);
+                        //             })
+                        //         }, 
+                        //         callbackScope: SELF
+                        //     });
                     });
                 }, this, this);
     
@@ -126,11 +130,9 @@ var SceneCreateGame = new Phaser.Class({
                 this.planes[2].plane = previousCreatedGame.planeLayout[2];
 
                 SELF.createdGameId = previousCreatedGame.gameId;
-                SELF.waitForGameMatch();
+                SELF.monitorGameStateChange();
 
             }
-
-
         }
 
         this.children.add(this.planes[0]);
@@ -175,23 +177,33 @@ var SceneCreateGame = new Phaser.Class({
 
         this.input.on('pointerdown', function (pointer) {
 
-            var x = pointer.x;
-            var y = pointer.y;
+            if(SELF.gameState === "GameInProgress"){
+                if(SELF.playStep % 2 === SELF.playerIndex){
+                    var x = pointer.x;
+                    var y = pointer.y;
+        
+                    // add enemy plane status
+                    if ((x > 550 && x < 950) && ( y > 30 && y < 430)) {
+        
+                        var xCell = parseInt((x - 550) / 40);
+                        var yCell = parseInt((y - 30) / 40);
+                        console.log("x: " + xCell + ", y: " + yCell);
+                        var gameId = SELF.matchGame? SELF.matchGameId : SELF.createdGameId;
+                        
+                        SELF.wallet.attacks(gameId, xCell, yCell);
+                        SELF.attackStateUpdated = false;
+                        var tx = (mCell * 40) + 565;
+                        var ty = (nCell * 40) + 40;
+                        
+                        //this.add.text(tx, ty, 'x', { font: '16px Courier', fill: '#ffffff' });    
+                    }
+                }
 
-            // add enemy plane status
-            if ((x > 550 && x < 950) && ( y > 30 && y < 430)) {
-
-                var mCell = parseInt((x - 550) / 40);
-                var nCell = parseInt((y - 30) / 40);
-                console.log("m: " + mCell + ", n: " + nCell)
-                var tx = (mCell * 40) + 565;
-                var ty = (nCell * 40) + 40;
-                
-                this.add.text(tx, ty, 'x', { font: '16px Courier', fill: '#ffffff' });    
+    
+                // SELF.graphics.clear();
+                // SELF.drawClock(50, 50, SELF.timerEvent);
             }
 
-            SELF.graphics.clear();
-            SELF.drawClock(50, 50, SELF.timerEvent);
 
         }, this);
 
@@ -202,7 +214,7 @@ var SceneCreateGame = new Phaser.Class({
         });
     },
 
-    waitForGameMatch: function(){
+    monitorGameStateChange: function(){
         var SELF = this;
 
         SELF.matchTimer = this.time.addEvent(
@@ -212,56 +224,56 @@ var SceneCreateGame = new Phaser.Class({
             callback: function(){
                 var gameId = SELF.matchGame? SELF.matchGameId : SELF.createdGameId;
                 SELF.wallet.getGame(gameId, game =>{
-                    if(game.state === "WaitingForAccept"){
+                    if(SELF.gameState !== "WaitingForAccept" && game.state === "WaitingForAccept"){
+                        SELF.gameState = game.state;
                         if(!SELF.matchGame){
-                            var currentTime = Math.floor(Date.now() / 1000); 
-                            if((game.attemptToMatchTimestamp + 60) > currentTime){
-            
-                                SELF.matchTimer.destroy();
-            
-                                SELF.add.text(200, 450, 'Do you want to accept user ' + game.playerAddress[1] + " challenge?", { font: '16px Courier', fill: '#ffffff' });
-                                SELF.acceptGameBtn = SELF.util.addButton('btnAccept', 300, 500, function(event, scope){ 
-                                    //scope.scene.start('createGame');
-                                    console.log('accept game');
-                                    SELF.acceptGameBtn.destroy();
-                                    SELF.denyGameBtn.destroy();
-                                    SELF.wallet.acceptGame(SELF.createdGameId); 
-                                    SELF.time.addEvent(
-                                        { 
-                                            delay: 3000,
-                                            repeat: 1,
-                                            callback: function(){
-                                                SELF.waitForGameMatch();
-                                            },
-                                            callbackScope: SELF
-                                        });
-                                }, SELF, SELF);
-    
-                                SELF.denyGameBtn = SELF.util.addButton('btnDeny', 400, 500, function(event, scope){ 
-                                    //scope.scene.start('createGame');
-                                    console.log('deny game');
-                                    SELF.acceptGameBtn.destroy();
-                                    SELF.denyGameBtn.destroy();
-                                    SELF.time.addEvent(
-                                        { 
-                                            delay: 60000,
-                                            repeat: 1,
-                                            callback: function(){
-                                                SELF.waitForGameMatch();
-                                            },
-                                            callbackScope: SELF
-                                        });
-      
-                                }, SELF, SELF);
-                            }
+                            SELF.waitingForMatch();
                         }
                     }else if(game.state === "GameInProgress"){
-                        if(SELF.gameState === "WaitingForMatch" || SELF.gameState === "WaitingForAccept"){
+                        if(SELF.gameState !== "GameInProgress" && SELF.gameState !== "UpdatingResult"){
                             console.log("Game started");
                             SELF.gameState = game.state;
-                        }
+                            
+                            //TODO: notify user to move
 
-                        if(SELF.gameState === "GameInProgress"){
+                            if(game.attacks.length > SELF.playStep ){
+                                // new step, need to update attack result onchain
+                                SELF.playStep = game.attacks.length;
+
+                                SELF.playerIndex = SELF.matchGame? 1 : 0;
+                                var lastAttackStep = game.attacks[game.attacks.length - 1];
+                                if(lastAttackStep.player == playerIndex && lastAttackStep.state === -1){
+                                    var point = {
+                                        x: game.attacks[game.attacks.length - 1].x,
+                                        y: game.attacks[game.attacks.length - 1].y
+                                    }
+                                    var state = SELF.createdGame.shootAt(point);
+                                    SELF.wallet.updateAttackResult(gameId, state);
+                                }
+                            }else{
+                                if(game.attacks.length > 0){
+                                    var lastAttackStep = game.attacks[game.attacks.length - 1];
+                                    if(!SELF.attackStateUpdated && 
+                                        lastAttackStep.player === (1 - SELF.playerIndex) &&
+                                        lastAttackStep.state != -1){
+                                        SELF.attackStateUpdated = true;
+                                        
+                                        var tx = (lastAttackStep.x * 40) + 565;
+                                        var ty = (lastAttackStep.y * 40) + 40;
+
+                                        var stateText = 'O';
+                                        if(lastAttackStep.state === 1){
+                                            stateText = 'x';
+                                        }else if(lastAttackStep.state === 2){
+                                            stateText = 'X';
+                                        }
+                                        
+                                        this.add.text(tx, ty, stateText, { font: '16px Courier', fill: '#ffffff' });                                              
+                                    }  
+                                }                              
+                            }                            
+                        }else{
+                            // Update timeout game result
                             var currentTime = Math.floor(Date.now() / 1000); 
                             if(currentTime > (game.lastMoveTimestamp + 90)){
                                 SELF.gameState = "UpdatingResult";
@@ -269,31 +281,94 @@ var SceneCreateGame = new Phaser.Class({
                                 var gameId = SELF.matchGame? SELF.matchGameId: SELF.createdGameId;
                                 SELF.wallet.updateTimeoutGameResult(gameId);
                             }
-                        }else if(SELF.gameState === "UpdatingResult"){
-                            if(game.state === "GameEnded"){
-                                console.log("Game end");
-                                SELF.gameState = "GameEnded";
-
-                                if(SELF.matchGame){
-                                    localStorage.setItem("challengeGameId", "");
-                                    localStorage.setItem("challengeGameLayout", "");
-                                    localStorage.setItem("challengeGameSalt", "");
-                                }else{
-                                    localStorage.setItem("createdGameId", "");
-                                    localStorage.setItem("createdGameLayout", "");
-                                    localStorage.setItem("createdGameSalt", "");
-                                }
-
-                            }
                         }
+                        // console.log("Game started");
+                        // SELF.gameState = game.state;
 
+                        // if(SELF.gameState === "GameInProgress"){
+
+                        // }else if(SELF.gameState === "UpdatingResult"){
+                        //     if(game.state === "GameEnded"){
+                        //         console.log("Game end");
+                        //         SELF.gameState = "GameEnded";
+                        //         SELF.matchTimer.destroy();
+                        //         if(SELF.matchGame){
+                        //             localStorage.setItem("challengeGameId", "");
+                        //             localStorage.setItem("challengeGameLayout", "");
+                        //             localStorage.setItem("challengeGameSalt", "");
+                        //         }else{
+                        //             localStorage.setItem("createdGameId", "");
+                        //             localStorage.setItem("createdGameLayout", "");
+                        //             localStorage.setItem("createdGameSalt", "");
+                        //         }
+
+                        //         //TODO: ask user whether to return to home page
+                        //     }
+                        // }
+
+                    }else if(game.state === "EndGameRequested"){
+                        // TODO: draw enemy's result and ask user whether to accept result or challenge the result 
+                    }else if(game.state === "GameEnded"){
+                        console.log("Game end");
+                        SELF.gameState = game.state;
+
+                        if(SELF.matchGame){
+                            localStorage.setItem("challengeGameId", "");
+                            localStorage.setItem("challengeGameLayout", "");
+                            localStorage.setItem("challengeGameSalt", "");
+                        }else{
+                            localStorage.setItem("createdGameId", "");
+                            localStorage.setItem("createdGameLayout", "");
+                            localStorage.setItem("createdGameSalt", "");
+                        }
                     }
                 })
             }, 
             callbackScope: SELF
         });
     },
+    waitingForMatch: function(){
+        var currentTime = Math.floor(Date.now() / 1000); 
+        if((game.attemptToMatchTimestamp + 60) > currentTime){
 
+            SELF.matchTimer.destroy();
+
+            SELF.add.text(200, 450, 'Do you want to accept user ' + game.playerAddress[1] + " challenge?", { font: '16px Courier', fill: '#ffffff' });
+            SELF.acceptGameBtn = SELF.util.addButton('btnAccept', 300, 500, function(event, scope){ 
+                //scope.scene.start('createGame');
+                console.log('accept game');
+                SELF.acceptGameBtn.destroy();
+                SELF.denyGameBtn.destroy();
+                SELF.wallet.acceptGame(SELF.createdGameId); 
+                SELF.time.addEvent(
+                    { 
+                        delay: 3000,
+                        repeat: 1,
+                        callback: function(){
+                            SELF.monitorGameStateChange();
+                        },
+                        callbackScope: SELF
+                    });
+            }, SELF, SELF);
+
+            SELF.denyGameBtn = SELF.util.addButton('btnDeny', 400, 500, function(event, scope){ 
+                //scope.scene.start('createGame');
+                console.log('deny game');
+                SELF.acceptGameBtn.destroy();
+                SELF.denyGameBtn.destroy();
+                SELF.time.addEvent(
+                    { 
+                        delay: 60000,
+                        repeat: 1,
+                        callback: function(){
+                            SELF.monitorGameStateChange();
+                        },
+                        callbackScope: SELF
+                    });
+
+            }, SELF, SELF);
+        }        
+    },
     updateGame: function(){
         this.createdGame.init();
         var originalPlanes = _.cloneDeep(this.createdGame.planes);
