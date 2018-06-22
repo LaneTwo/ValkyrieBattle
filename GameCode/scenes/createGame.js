@@ -224,6 +224,7 @@ var SceneCreateGame = new Phaser.Class({
                                     //scope.scene.start('createGame');
                                     console.log('accept game');
                                     SELF.acceptGameBtn.destroy();
+                                    SELF.denyGameBtn.destroy();
                                     SELF.wallet.acceptGame(SELF.createdGameId); 
                                     SELF.time.addEvent(
                                         { 
@@ -239,6 +240,7 @@ var SceneCreateGame = new Phaser.Class({
                                 SELF.denyGameBtn = SELF.util.addButton('btnDeny', 400, 500, function(event, scope){ 
                                     //scope.scene.start('createGame');
                                     console.log('deny game');
+                                    SELF.acceptGameBtn.destroy();
                                     SELF.denyGameBtn.destroy();
                                     SELF.time.addEvent(
                                         { 
@@ -265,7 +267,7 @@ var SceneCreateGame = new Phaser.Class({
                                 SELF.gameState = "UpdatingResult";
                                 //SELF.matchTimer.destroy();
                                 var gameId = SELF.matchGame? SELF.matchGameId: SELF.createdGameId;
-                                SELF.updateTimeoutGameResult(gameId);
+                                SELF.wallet.updateTimeoutGameResult(gameId);
                             }
                         }else if(SELF.gameState === "UpdatingResult"){
                             if(game.state === "GameEnded"){
@@ -290,8 +292,6 @@ var SceneCreateGame = new Phaser.Class({
             }, 
             callbackScope: SELF
         });
-
-
     },
 
     updateGame: function(){
