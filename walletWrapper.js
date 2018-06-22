@@ -254,8 +254,6 @@ WalletWrapper.prototype = {
           //console.log("createNewGame listener resp: " + resp);
         }
     
-        var layoutStr = JSON.stringify(planeLayout) + salt;
-        var gameHash = md5(layoutStr);
         var callFunction = "acceptGame";
         var callArgs = "["+ gameId.toString() + "]";
         serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
