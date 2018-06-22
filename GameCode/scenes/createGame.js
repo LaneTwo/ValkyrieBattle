@@ -9,9 +9,12 @@ var SceneCreateGame = new Phaser.Class({
         this.cursors;
         this.selectedPlane;
 
-        this.graphics;
-        this.timerEvent;
-        this.clockSize = 30;
+        // this.graphics;
+        // this.timerEvent;
+        // this.clockSize = 30;
+
+        this.timerText = 0;
+
         this.createdGame = new Game();
         this.createdGame.init();
         this.util = new Util();
@@ -21,7 +24,6 @@ var SceneCreateGame = new Phaser.Class({
         this.gameState = "WaitingForMatch";
          
     },
-
 
     init: function(param){
         console.log('------------->');
@@ -39,7 +41,7 @@ var SceneCreateGame = new Phaser.Class({
         this.load.image('btnMatchGamge', 'images/matchGame.png');
         this.load.image('btnAccept', 'images/accept.png');
         this.load.image('btnDeny', 'images/deny.png');
-    },
+    },h
     
     create: function() {
         var SELF = this;
@@ -49,6 +51,8 @@ var SceneCreateGame = new Phaser.Class({
 
         this.add.text(250, 5, 'Mine Planes', { font: '16px Courier', fill: '#ffffff' });
         this.add.text(700, 5, 'Enemy Planes', { font: '16px Courier', fill: '#ffffff' });
+
+        this.add.text(5, 5, this.timerText, { font: '16px Courier', fill: '#ffffff' });
 
         var mineGrid = drawGrid(400, 400, this.add.graphics({x: 100, y: 30}));
         var enemyGrid = drawGrid(400, 400, this.add.graphics({x: 550, y: 30}));
