@@ -195,8 +195,9 @@ var SceneCreateGame = new Phaser.Class({
                         
                     }
                 }
+
+                SELF.timedEvent = SELF.time.addEvent({ delay: 1000, callback: SELF.onEvent, callbackScope: SELF, repeat: 15 });
             }
-            SELF.timedEvent = SELF.time.addEvent({ delay: 1000, callback: SELF.onEvent, callbackScope: SELF, repeat: 15 });
 
         }, this);
 
