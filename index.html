@@ -6,6 +6,10 @@
     <script src="./plane.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/nebpay.js@0.1.0/dist/nebPay.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.10/lodash.min.js"></script>
+    <script
+    src="https://code.jquery.com/jquery-3.3.1.min.js"
+    integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
     <script src="walletWrapper.js"></script>
     <script src="./grid.js"></script>
     <script src="util.js"></script>
@@ -27,7 +31,25 @@
             width: 1024,
             height: 800,
             scene: [SceneHome, SceneCreateGame, SceneAcceptGame, SceneInGame, SceneListGame, SceneLeaderboard]
-        };    
+        }; 
+        
+        var InternetStandardTime = 0;
+
+
+
+        function convertUnixTimeCallback(result){
+            //console.log(result.timestamp);
+            InternetStandardTime = result.timestamp;
+        }
+
+
+        function getStarndardTime()
+        {
+            $.getScript( "http://www.convert-unix-time.com/api?timestamp=now&returnType=jsonp&callback=convertUnixTimeCallback");
+            var t=setTimeout(getStarndardTime, 1000)
+        }
+
+        getStarndardTime();
 
         var game = new Phaser.Game(config);
         console.log(game);

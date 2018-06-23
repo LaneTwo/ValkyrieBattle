@@ -282,11 +282,14 @@ var SceneCreateGame = new Phaser.Class({
 
     processOngoingGame(gameId, game){
         var SELF = this;
-        if(SELF.gameState !== "GameInProgress" && SELF.gameState !== "UpdatingResult"){
-            console.log("Game started");
-            SELF.gameState = game.state;
-            
-            //TODO: notify user to move
+        if(game.state === "GameInProgress" && SELF.gameState !== "UpdatingResult"){
+
+            if(SELF.gameState !== "GameInProgress" && SELF.gameState !== "UpdatingResult"){
+                console.log("Game started");
+                SELF.gameState = game.state;
+                
+                //TODO: notify user to move
+            }
 
             if(game.attacks.length > SELF.playStep ){
                 // new step, need to update attack result onchain
@@ -326,10 +329,12 @@ var SceneCreateGame = new Phaser.Class({
             }                            
         }else if(game.state === "GameEnded"){
             SELF.matchTimer.destroy();
+
+            //TODO: 
         }else{
             // Update timeout game result
-            var currentTime = Math.floor(Date.now() / 1000); 
-            if(currentTime > (game.lastMoveTimestamp + ACTION_EXPIRE_TIMEOUT)){                
+            //var currentTime = Math.floor(Date.now() / 1000); 
+            if(InternetStandardTime > (game.lastMoveTimestamp + ACTION_EXPIRE_TIMEOUT)){                
                 if(SELF.gameState !== "UpdatingResult"){
                     SELF.gameState = "UpdatingResult";
                     //SELF.matchTimer.destroy();
@@ -341,8 +346,8 @@ var SceneCreateGame = new Phaser.Class({
     },
     waitingForMatch: function(game){
         var SELF = this;
-        var currentTime = Math.floor(Date.now() / 1000); 
-        if((game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT) > currentTime){
+        //var currentTime = Math.floor(Date.now() / 1000); 
+        if((game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT) > InternetStandardTime){
 
             //SELF.matchTimer.destroy();
             if(!SELF.acceptGameBtn){
