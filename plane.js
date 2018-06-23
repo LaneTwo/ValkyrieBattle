@@ -4,11 +4,11 @@ var PlaneSprite = new Phaser.Class({
 
     initialize:
 
-    function PlaneSprite (scene, x, y)
+    function PlaneSprite (scene, x, y, image)
     {
         Phaser.GameObjects.Image.call(this, scene);
 
-        this.setTexture('plane');
+        this.setTexture(image);
         this.setPosition(x, y);
         //this.setScale(0.3);
 

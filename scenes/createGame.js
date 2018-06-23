@@ -24,6 +24,7 @@ var SceneCreateGame = new Phaser.Class({
         this.playStep = 0;
         this.playerIndex = 0;
         this.attackStateUpdated = false;
+        this.requestingEndGame = false;
     },
 
     init: function(param){
@@ -42,6 +43,10 @@ var SceneCreateGame = new Phaser.Class({
         this.load.image('btnMatchGamge', 'images/matchGame.png');
         this.load.image('btnAccept', 'images/accept.png');
         this.load.image('btnDeny', 'images/deny.png');
+        this.load.image('btnRequestEnd', 'images/requestend.png');
+        this.load.image('btnEndGame', 'images/endgame.png');
+        this.load.image('btnCancel', 'images/cancel.png');
+        this.load.image('enemyplane', 'images/enemyplane.png');
     },
     
     create: function() {
@@ -60,26 +65,25 @@ var SceneCreateGame = new Phaser.Class({
         zone.input.dropZone = true;
 
         this.planes = [];
-        this.planes.push(new PlaneSprite(this, 50, 70).setInteractive());
-        this.planes.push(new PlaneSprite(this, 50, 70).setInteractive());
-        this.planes.push(new PlaneSprite(this, 50, 70).setInteractive());
+        this.enemyPlanes = [];
+        this.planes.push(new PlaneSprite(this, 50, 70, 'plane').setInteractive());
+        this.planes.push(new PlaneSprite(this, 50, 70, 'plane').setInteractive());
+        this.planes.push(new PlaneSprite(this, 50, 70, 'plane').setInteractive());
+
+        this.enemyPlanes.push(new PlaneSprite(this, 50, 70, 'enemyplane').setInteractive());
+        this.enemyPlanes.push(new PlaneSprite(this, 50, 70, 'enemyplane').setInteractive());
+        this.enemyPlanes.push(new PlaneSprite(this, 50, 70, 'enemyplane').setInteractive());
+        
+        this.enemyPlanes[0].plane.point = {x: 2, y:0};
+        this.enemyPlanes[1].plane.point = {x: 7, y:0};
+        this.enemyPlanes[2].plane.point = {x: 2, y:9};
+        this.enemyPlanes[2].plane.orientation = PlaneOrientation.Bottom;
 
         if(SELF.matchGame){
             SELF.matchGameBtn = this.util.addButton('btnMatchGamge', 300, 500, function(event, scope){ 
                 //scope.scene.start('createGame');
                 console.log('match game');
                 SELF.matchGameBtn.destroy();
-                // SELF.matchTimer = SELF.time.addEvent(
-                //     { 
-                //         delay: 5000,
-                //         loop:true, 
-                //         callback: function(){
-                //             SELF.wallet.getGame(SELF.matchGameId, gameDetail =>{
-                //                 console.log(gameDetail);
-                //             })
-                //         }, 
-                //         callbackScope: SELF
-                //     });
                 
                 SELF.wallet.matchGame(SELF.matchGameId ,SELF.createdGame.planes, "1");
                 SELF.monitorGameStateChange();
@@ -105,17 +109,6 @@ var SceneCreateGame = new Phaser.Class({
                         SELF.createdGameId = gameId;
                         SELF.gameState = "WaitingForMatch";
                         SELF.monitorGameStateChange();
-                        // SELF.matchTimer = SELF.time.addEvent(
-                        //     { 
-                        //         delay: 5000,
-                        //         loop:true, 
-                        //         callback: function(){
-                        //             SELF.wallet.getGame(SELF.createdGameId, gameDetail =>{
-                        //                 console.log(gameDetail);
-                        //             })
-                        //         }, 
-                        //         callbackScope: SELF
-                        //     });
                     });
                 }, this, this);
     
@@ -221,43 +214,15 @@ var SceneCreateGame = new Phaser.Class({
                 var gameId = SELF.matchGame? SELF.matchGameId : SELF.createdGameId;
                 SELF.wallet.getGame(gameId, game =>{
                     if(game.state === "WaitingForAccept"){
-                        // if(SELF.gameState !== "WaitingForAccept"){
-                        //     SELF.gameState = game.state;
-                        //     if(!SELF.matchGame){
-                        //         SELF.waitingForMatch(game);
-                        //     }
-                        // }
-                        SELF.gameState = game.state;
-                        if(!SELF.matchGame){
-                            SELF.waitingForMatch(game);
+                        if(SELF.gameState !== "WaitingForConfirm" &&
+                            InternetStandardTime < (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
+                            SELF.gameState = game.state;
+                            if(!SELF.matchGame){
+                                SELF.waitingForMatch(game);
+                            }
                         }
-
                     }else if(game.state === "GameInProgress"){
                         SELF.processOngoingGame(gameId, game);
-                        // console.log("Game started");
-                        // SELF.gameState = game.state;
-
-                        // if(SELF.gameState === "GameInProgress"){
-
-                        // }else if(SELF.gameState === "UpdatingResult"){
-                        //     if(game.state === "GameEnded"){
-                        //         console.log("Game end");
-                        //         SELF.gameState = "GameEnded";
-                        //         SELF.matchTimer.destroy();
-                        //         if(SELF.matchGame){
-                        //             localStorage.setItem("challengeGameId", "");
-                        //             localStorage.setItem("challengeGameLayout", "");
-                        //             localStorage.setItem("challengeGameSalt", "");
-                        //         }else{
-                        //             localStorage.setItem("createdGameId", "");
-                        //             localStorage.setItem("createdGameLayout", "");
-                        //             localStorage.setItem("createdGameSalt", "");
-                        //         }
-
-                        //         //TODO: ask user whether to return to home page
-                        //     }
-                        // }
-
                     }else if(game.state === "EndGameRequested"){
                         // TODO: draw enemy's result and ask user whether to accept result or challenge the result 
                     }else if(game.state === "GameEnded"){
@@ -273,6 +238,10 @@ var SceneCreateGame = new Phaser.Class({
                             localStorage.setItem("createdGameLayout", "");
                             localStorage.setItem("createdGameSalt", "");
                         }
+
+                        SELF.matchTimer.destroy();
+
+                        // TODO: show victory or loss message
                     }
                 })
             }, 
@@ -289,6 +258,59 @@ var SceneCreateGame = new Phaser.Class({
                 SELF.gameState = game.state;
                 
                 //TODO: notify user to move
+            }
+
+            if(!SELF.requestEndGameBtn){
+                SELF.requestEndGameBtn = SELF.util.addButton('btnRequestEnd', 300, 500, function(event, scope){ 
+                    //scope.scene.start('createGame');
+                    console.log('request end game');
+                    SELF.requestEndGameBtn.visible = false;
+                    //SELF.requestEndGameBtn = null;
+
+                    if(!SELF.endGameBtn){
+                        SELF.endGameBtn = SELF.util.addButton('btnEndGame', 220, 500, function(event, scope){ 
+                            //scope.scene.start('createGame');
+                            console.log('request end game');
+                            SELF.endGameBtn.visible = false;
+                            SELF.cancelBtn.visible = false;
+        
+                            console.log('End game');
+                            SELF.requestingEndGame = true;
+        
+                        }, SELF, SELF);
+                    }else{
+                        SELF.endGameBtn.visible = true;
+                    }
+
+                    if(!SELF.cancelBtn){
+                        SELF.cancelBtn = SELF.util.addButton('btnCancel', 420, 500, function(event, scope){ 
+                            //scope.scene.start('createGame');
+                            console.log('cancel end game');
+                            SELF.endGameBtn.visible = false;
+                            SELF.cancelBtn.visible = false;
+        
+                            console.log('End game');
+                            SELF.requestingEndGame = false;
+        
+                        }, SELF, SELF);
+                    }else{
+                        SELF.cancelBtn.visible = true;
+                    }
+
+                    SELF.requestingEndGame = true;
+
+                }, SELF, SELF);
+            }else{
+                SELF.requestEndGameBtn.visible = !SELF.requestingEndGame;
+            }
+
+            if(InternetStandardTime > (game.lastMoveTimestamp + ACTION_EXPIRE_TIMEOUT)){                
+                if(SELF.gameState !== "UpdatingResult"){
+                    SELF.gameState = "UpdatingResult";
+                    //SELF.matchTimer.destroy();
+                    var gameId = SELF.matchGame? SELF.matchGameId: SELF.createdGameId;
+                    SELF.wallet.updateTimeoutGameResult(gameId);
+                }
             }
 
             if(game.attacks.length > SELF.playStep ){
@@ -334,14 +356,7 @@ var SceneCreateGame = new Phaser.Class({
         }else{
             // Update timeout game result
             //var currentTime = Math.floor(Date.now() / 1000); 
-            if(InternetStandardTime > (game.lastMoveTimestamp + ACTION_EXPIRE_TIMEOUT)){                
-                if(SELF.gameState !== "UpdatingResult"){
-                    SELF.gameState = "UpdatingResult";
-                    //SELF.matchTimer.destroy();
-                    var gameId = SELF.matchGame? SELF.matchGameId: SELF.createdGameId;
-                    SELF.wallet.updateTimeoutGameResult(gameId);
-                }
-            }
+
         }        
     },
     waitingForMatch: function(game){
@@ -360,17 +375,9 @@ var SceneCreateGame = new Phaser.Class({
                     SELF.acceptGameBtn = null;
                     SELF.denyGameBtn = null;
     
+                    SELF.gameState = "WaitingForConfirm";
                     SELF.wallet.acceptGame(SELF.createdGameId); 
-                    SELF.monitorGameStateChange();
-                    // SELF.time.addEvent(
-                    //     { 
-                    //         delay: 3000,
-                    //         repeat: 1,
-                    //         callback: function(){
-                                
-                    //         },
-                    //         callbackScope: SELF
-                    //     });
+                    //SELF.monitorGameStateChange();
                 }, SELF, SELF);
     
                 SELF.denyGameBtn = SELF.util.addButton('btnDeny', 400, 500, function(event, scope){ 
@@ -380,16 +387,7 @@ var SceneCreateGame = new Phaser.Class({
                     SELF.denyGameBtn.destroy();
                     SELF.acceptGameBtn = null;
                     SELF.denyGameBtn = null;
-                    SELF.monitorGameStateChange();
-                    // SELF.time.addEvent(
-                    //     { 
-                    //         delay: 60000,
-                    //         repeat: 1,
-                    //         callback: function(){
-                    //             SELF.monitorGameStateChange();
-                    //         },
-                    //         callbackScope: SELF
-                    //     });
+                    //SELF.monitorGameStateChange();
     
                 }, SELF, SELF);
             }
