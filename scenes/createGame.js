@@ -29,7 +29,6 @@ var SceneCreateGame = new Phaser.Class({
     },
 
     init: function(param){
-        console.log('------------->');
         if(param.matchGame){
             this.matchGame = true;
             this.matchGameId = param.gameId;
@@ -94,7 +93,7 @@ var SceneCreateGame = new Phaser.Class({
                 console.log('match game');
                 SELF.matchGameBtn.destroy();
                 
-                SELF.wallet.matchGame(SELF.matchGameId ,SELF.createdGame.planes, "1");
+                SELF.wallet.matchGame(SELF.matchGameId, SELF.orderPlanes(SELF.createdGame.planes), "1");
                 SELF.monitorGameStateChange();
             }, this, this);
 
@@ -114,7 +113,7 @@ var SceneCreateGame = new Phaser.Class({
                     console.log('create game');
                     SELF.createGameBtn.destroy();
                     
-                    SELF.wallet.createNewGame(SELF.createdGame.planes, "1", function(gameId){
+                    SELF.wallet.createNewGame(SELF.orderPlanes(SELF.createdGame.planes), "1", function(gameId){
                         SELF.createdGameId = gameId;
                         SELF.gameState = "WaitingForMatch";
                         SELF.monitorGameStateChange();
@@ -187,6 +186,7 @@ var SceneCreateGame = new Phaser.Class({
                 SELF.updateGame(SELF.createdGame, SELF.planes);
             }else{
                 SELF.updateGame(SELF.enemyGame, SELF.enemyPlanes);
+                console.log(SELF.enemyGame.planes);
             }
             
             gameObject.isDragging = false;
@@ -197,7 +197,7 @@ var SceneCreateGame = new Phaser.Class({
         this.input.on('pointerdown', function (pointer) {
 
             if(SELF.gameState === "GameInProgress"){
-                if(SELF.playStep % 2 === SELF.playerIndex){
+                if(SELF.playStep % 2 === SELF.playerIndex && !SELF.requestingEndGame){
                     var x = pointer.x;
                     var y = pointer.y;
         
@@ -226,6 +226,12 @@ var SceneCreateGame = new Phaser.Class({
             if(SELF.selectedPlane && SELF.selectedPlane.isDragging){
                 SELF.selectedPlane.setNextDirection();
             }
+        });
+    },
+
+    orderPlanes(planes){
+        return _.sortBy(planes, function(plane){
+            return plane.point.x * 10 + plane.point.y;
         });
     },
 
@@ -260,7 +266,35 @@ var SceneCreateGame = new Phaser.Class({
                     }else if(game.state === "GameInProgress"){
                         SELF.processOngoingGame(gameId, game);
                     }else if(game.state === "EndGameRequested"){
-                        // TODO: draw enemy's result and ask user whether to accept result or challenge the result 
+                        if(InternetStandardTime > (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
+                            if(SELF.gameState !== "WaitingConfirmForTimeout"){
+                                SELF.wallet.updateTimeoutGameResult(game.gameId);
+                                SELF.gameState = "WaitingConfirmForTimeout";
+                            }
+                            
+                        }else{
+                            // TODO: draw enemy's result and ask user whether to accept result or challenge the result 
+                            // TODO: get salt from localstorage
+                            if(game.currentPlayer !== SELF.playerIndex){
+                                if(SELF.gameState !== "WaitingConfirmForEndGame"){
+                                    //SELF.gameState = game.state;
+    
+                                    SELF.gameState = "WaitingConfirmForEndGame";
+    
+                                    var ownPlaneLayout = SELF.orderPlanes(SELF.createdGame.planes);
+    
+                                    console.log('---------------------->Final compare');
+                                    console.log(game.playerLayout[SELF.playerIndex]);
+                                    console.log('<-----------------------');
+                                    console.log(JSON.stringify(ownPlaneLayout));
+                                    if(_.isEqual(game.playerLayout[SELF.playerIndex], JSON.stringify(ownPlaneLayout))){
+                                        SELF.wallet.surrenderGame(game.gameId);
+                                    }else{
+                                        SELF.wallet.challengeEnemy(game.gameId, ownPlaneLayout, '1');
+                                    }                                
+                                }
+                            }
+                        }   
                     }else if(game.state === "GameEnded"){
                         console.log("Game end");
                         SELF.gameState = game.state;
@@ -287,6 +321,8 @@ var SceneCreateGame = new Phaser.Class({
 
     processOngoingGame(gameId, game){
         var SELF = this;
+        SELF.playerIndex = SELF.matchGame? 1 : 0;
+        
         if(game.state === "GameInProgress" && SELF.gameState !== "UpdatingResult"){
 
             if(SELF.gameState !== "GameInProgress" && SELF.gameState !== "UpdatingResult"){
@@ -313,7 +349,11 @@ var SceneCreateGame = new Phaser.Class({
                             console.log('End game');
                             SELF.requestingEndGame = true;
                             SELF.updatePlanDraggable();
-        
+                            
+                            var enemyPlaneLayout = SELF.enemyGame.planes;
+                            console.log("================> enemy layout");
+                            console.log(JSON.stringify(SELF.orderPlanes(enemyPlaneLayout)));
+                            SELF.wallet.requestEndGame(game.gameId, SELF.orderPlanes(enemyPlaneLayout));
                         }, SELF, SELF);
                     }else{
                         SELF.endGameBtn.visible = true;
@@ -356,7 +396,6 @@ var SceneCreateGame = new Phaser.Class({
                 // new step, need to update attack result onchain
                 SELF.playStep = game.attacks.length;
 
-                SELF.playerIndex = SELF.matchGame? 1 : 0;
                 var lastAttackStep = game.attacks[game.attacks.length - 1];
                 if(lastAttackStep.player == SELF.playerIndex && lastAttackStep.state === -1){
                     var point = {
