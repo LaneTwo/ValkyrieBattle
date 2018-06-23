@@ -11,9 +11,12 @@ var PlaneSprite = new Phaser.Class({
         this.setTexture(image);
         this.setPosition(x, y);
         //this.setScale(0.3);
+        //this.setOrigin(0.5, 0.5);        
 
         this.isDragging = false;
         this.plane = new Plane({x:-1, y:-1}, 0);
+
+        this.isEnemyPlane = image === "enemyplane";
     },
 
     setNextDirection:function (){

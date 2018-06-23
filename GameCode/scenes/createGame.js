@@ -15,7 +15,9 @@ var SceneCreateGame = new Phaser.Class({
         this.timedEvent;
 
         this.createdGame = new Game();
+        this.enemyGame = new Game();
         this.createdGame.init();
+        this.enemyGame.init();
         this.util = new Util();
         this.wallet = new WalletWrapper();
         this.matchGame = false;
@@ -24,7 +26,6 @@ var SceneCreateGame = new Phaser.Class({
         this.playStep = 0;
         this.playerIndex = 0;
         this.attackStateUpdated = false;
-        this.requestingEndGame = false;
     },
 
     init: function(param){
@@ -61,8 +62,12 @@ var SceneCreateGame = new Phaser.Class({
         var enemyGrid = drawGrid(400, 400, this.add.graphics({x: 550, y: 30}));
 
         //  A drop zone
-        var zone = this.add.zone(290, 205, 400, 400).setDropZone();
+        // var zone = this.add.zone(290, 205, 400, 400).setDropZone();
+        // zone.input.dropZone = true;
+        var zone = this.add.zone(100, 30, 1800, 1600).setDropZone();
         zone.input.dropZone = true;
+        // var enemyZone = this.add.zone(630, 30, 400, 400).setDropZone();
+        // enemyZone.input.dropZone = true;
 
         this.planes = [];
         this.enemyPlanes = [];
@@ -78,6 +83,10 @@ var SceneCreateGame = new Phaser.Class({
         this.enemyPlanes[1].plane.point = {x: 7, y:0};
         this.enemyPlanes[2].plane.point = {x: 2, y:9};
         this.enemyPlanes[2].plane.orientation = PlaneOrientation.Bottom;
+
+        this.enemyPlanes[0].visible = false;
+        this.enemyPlanes[1].visible = false;
+        this.enemyPlanes[2].visible = false;
 
         if(SELF.matchGame){
             SELF.matchGameBtn = this.util.addButton('btnMatchGamge', 300, 500, function(event, scope){ 
@@ -131,12 +140,21 @@ var SceneCreateGame = new Phaser.Class({
         this.children.add(this.planes[0]);
         this.children.add(this.planes[1]);
         this.children.add(this.planes[2]);
+        this.children.add(this.enemyPlanes[0]);
+        this.children.add(this.enemyPlanes[1]);
+        this.children.add(this.enemyPlanes[2]);
 
-        this.updateGame();
+        this.updateGame(SELF.createdGame, SELF.planes);
 
         this.input.setDraggable(this.planes[0]);
         this.input.setDraggable(this.planes[1]);
         this.input.setDraggable(this.planes[2]);
+
+        this.input.setDraggable(this.enemyPlanes[0]);
+        this.input.setDraggable(this.enemyPlanes[1]);
+        this.input.setDraggable(this.enemyPlanes[2]);
+
+        this.updatePlanDraggable();
 
         this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
             
@@ -145,6 +163,8 @@ var SceneCreateGame = new Phaser.Class({
             gameObject.isDragging = true;
             
             SELF.selectedPlane = gameObject;
+
+            console.log(gameObject);
         });
 
         this.input.on('dragend', function (pointer, gameObject, dropped) {
@@ -154,7 +174,8 @@ var SceneCreateGame = new Phaser.Class({
                 gameObject.y = gameObject.input.dragStartY;
             }
             console.log(gameObject.x + "," + gameObject.y);
-            gameObject.updateGridPosition(gameObject.x - 100, gameObject.y - 30);
+            var offsetX = gameObject.isEnemyPlane? 550: 100;
+            gameObject.updateGridPosition(gameObject.x - offsetX, gameObject.y - 30);
 
             // if(!SELF.createdGame.addPlane(gameObject.plane)){
             //     gameObject.x = gameObject.input.dragStartX;
@@ -162,7 +183,12 @@ var SceneCreateGame = new Phaser.Class({
             //     gameObject.plane.point.x = -1;
             //     gameObject.plane.point.y = -1;
             // }
-            SELF.updateGame();
+            if(!SELF.requestingEndGame){
+                SELF.updateGame(SELF.createdGame, SELF.planes);
+            }else{
+                SELF.updateGame(SELF.enemyGame, SELF.enemyPlanes);
+            }
+            
             gameObject.isDragging = false;
             SELF.selectedPlane = null;
             SELF.cursors = SELF.input.keyboard.createCursorKeys();
@@ -201,6 +227,16 @@ var SceneCreateGame = new Phaser.Class({
                 SELF.selectedPlane.setNextDirection();
             }
         });
+    },
+
+    updatePlanDraggable(){
+        for(var i = 0; i < this.planes.length; i++){
+            this.planes[i].input.draggable = !this.requestingEndGame;
+        } 
+
+        for(var i = 0; i < this.enemyPlanes.length; i++){
+            this.enemyPlanes[i].input.draggable = this.requestingEndGame;
+        } 
     },
 
     monitorGameStateChange: function(){
@@ -276,6 +312,7 @@ var SceneCreateGame = new Phaser.Class({
         
                             console.log('End game');
                             SELF.requestingEndGame = true;
+                            SELF.updatePlanDraggable();
         
                         }, SELF, SELF);
                     }else{
@@ -291,6 +328,7 @@ var SceneCreateGame = new Phaser.Class({
         
                             console.log('End game');
                             SELF.requestingEndGame = false;
+                            SELF.updatePlanDraggable();
         
                         }, SELF, SELF);
                     }else{
@@ -298,6 +336,7 @@ var SceneCreateGame = new Phaser.Class({
                     }
 
                     SELF.requestingEndGame = true;
+                    SELF.updatePlanDraggable();
 
                 }, SELF, SELF);
             }else{
@@ -394,20 +433,20 @@ var SceneCreateGame = new Phaser.Class({
 
         }        
     },
-    updateGame: function(){
-        this.createdGame.init();
-        var originalPlanes = _.cloneDeep(this.createdGame.planes);
-        this.createdGame.planes = [];
-        this.createdGame.numberOfPlanes = 0;
+    updateGame: function(game, planes){
+        game.init();
+        var originalPlanes = _.cloneDeep(game.planes);
+        game.planes = [];
+        game.numberOfPlanes = 0;
 
-        if(!(this.createdGame.addPlane(_.cloneDeep(this.planes[0].plane)) && 
-            this.createdGame.addPlane(_.cloneDeep(this.planes[1].plane)) && 
-            this.createdGame.addPlane(_.cloneDeep(this.planes[2].plane)))){
-            this.createdGame.planes = _.cloneDeep(originalPlanes);
+        if(!(game.addPlane(_.cloneDeep(planes[0].plane)) && 
+            game.addPlane(_.cloneDeep(planes[1].plane)) && 
+            game.addPlane(_.cloneDeep(planes[2].plane)))){
+            game.planes = _.cloneDeep(originalPlanes);
 
-            this.planes[0].plane = originalPlanes[0];
-            this.planes[1].plane = originalPlanes[1];
-            this.planes[2].plane = originalPlanes[2];
+            planes[0].plane = originalPlanes[0];
+            planes[1].plane = originalPlanes[1];
+            planes[2].plane = originalPlanes[2];
         }
     },
     update: function() {
@@ -429,6 +468,26 @@ var SceneCreateGame = new Phaser.Class({
             }
             this.planes[i].setAngle(this.planes[i].getAngle());
         }
+
+        if(this.requestingEndGame){
+            for(var i = 0; i < this.enemyPlanes.length; i++){
+                if(this.enemyPlanes[i].isDragging){
+                    continue;
+                }
+                var pos = this.enemyPlanes[i].getDrawPosition();
+                if(pos.x >= 0 && pos.y >= 0){
+                    this.enemyPlanes[i].x = pos.x + 550;
+                    this.enemyPlanes[i].y = pos.y + 30;
+                }
+                this.enemyPlanes[i].setAngle(this.enemyPlanes[i].getAngle());
+                this.enemyPlanes[i].visible = true;
+            }
+        }else{
+            for(var i = 0; i < this.enemyPlanes.length; i++){
+                this.enemyPlanes[i].visible = false;
+            }            
+        }
+
 
     },
 
