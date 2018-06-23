@@ -19,7 +19,7 @@ var SceneLeaderboard = new Phaser.Class({
     {
         this.wallet.getLeaderboard(results => {
             if(results.length == 0){
-                this.add.text(200, 300, 'There is no games ended, you can create one to play with others.', { font: '32px Courier', fill: '#ffffff' });
+                this.add.text(200, 300, 'There is no games ended, you can create one to play with others.', { font: '18px Courier', fill: '#ffffff' });
             }else{
                 var results = _.orderBy(results, ['win', 'loss'], ['desc', 'asc']);
                 var offsetY = 50;

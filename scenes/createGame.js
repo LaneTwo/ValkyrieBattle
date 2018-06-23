@@ -1,3 +1,5 @@
+const ACTION_EXPIRE_TIMEOUT = 120;
+
 var SceneCreateGame = new Phaser.Class({
 
     Extends: Phaser.Scene,
@@ -190,10 +192,10 @@ var SceneCreateGame = new Phaser.Class({
                         console.log("x: " + xCell + ", y: " + yCell);
                         var gameId = SELF.matchGame? SELF.matchGameId : SELF.createdGameId;
                         
-                        SELF.wallet.attacks(gameId, xCell, yCell);
+                        SELF.wallet.attack(gameId, xCell, yCell);
                         SELF.attackStateUpdated = false;
-                        var tx = (mCell * 40) + 565;
-                        var ty = (nCell * 40) + 40;
+                        //var tx = (xCell * 40) + 565;
+                        //var ty = (yCell * 40) + 40;
                         
                         //this.add.text(tx, ty, 'x', { font: '16px Courier', fill: '#ffffff' });    
                     }
@@ -224,64 +226,20 @@ var SceneCreateGame = new Phaser.Class({
             callback: function(){
                 var gameId = SELF.matchGame? SELF.matchGameId : SELF.createdGameId;
                 SELF.wallet.getGame(gameId, game =>{
-                    if(SELF.gameState !== "WaitingForAccept" && game.state === "WaitingForAccept"){
+                    if(game.state === "WaitingForAccept"){
+                        // if(SELF.gameState !== "WaitingForAccept"){
+                        //     SELF.gameState = game.state;
+                        //     if(!SELF.matchGame){
+                        //         SELF.waitingForMatch(game);
+                        //     }
+                        // }
                         SELF.gameState = game.state;
                         if(!SELF.matchGame){
-                            SELF.waitingForMatch();
+                            SELF.waitingForMatch(game);
                         }
+
                     }else if(game.state === "GameInProgress"){
-                        if(SELF.gameState !== "GameInProgress" && SELF.gameState !== "UpdatingResult"){
-                            console.log("Game started");
-                            SELF.gameState = game.state;
-                            
-                            //TODO: notify user to move
-
-                            if(game.attacks.length > SELF.playStep ){
-                                // new step, need to update attack result onchain
-                                SELF.playStep = game.attacks.length;
-
-                                SELF.playerIndex = SELF.matchGame? 1 : 0;
-                                var lastAttackStep = game.attacks[game.attacks.length - 1];
-                                if(lastAttackStep.player == playerIndex && lastAttackStep.state === -1){
-                                    var point = {
-                                        x: game.attacks[game.attacks.length - 1].x,
-                                        y: game.attacks[game.attacks.length - 1].y
-                                    }
-                                    var state = SELF.createdGame.shootAt(point);
-                                    SELF.wallet.updateAttackResult(gameId, state);
-                                }
-                            }else{
-                                if(game.attacks.length > 0){
-                                    var lastAttackStep = game.attacks[game.attacks.length - 1];
-                                    if(!SELF.attackStateUpdated && 
-                                        lastAttackStep.player === (1 - SELF.playerIndex) &&
-                                        lastAttackStep.state != -1){
-                                        SELF.attackStateUpdated = true;
-                                        
-                                        var tx = (lastAttackStep.x * 40) + 565;
-                                        var ty = (lastAttackStep.y * 40) + 40;
-
-                                        var stateText = 'O';
-                                        if(lastAttackStep.state === 1){
-                                            stateText = 'x';
-                                        }else if(lastAttackStep.state === 2){
-                                            stateText = 'X';
-                                        }
-                                        
-                                        this.add.text(tx, ty, stateText, { font: '16px Courier', fill: '#ffffff' });                                              
-                                    }  
-                                }                              
-                            }                            
-                        }else{
-                            // Update timeout game result
-                            var currentTime = Math.floor(Date.now() / 1000); 
-                            if(currentTime > (game.lastMoveTimestamp + 90)){
-                                SELF.gameState = "UpdatingResult";
-                                //SELF.matchTimer.destroy();
-                                var gameId = SELF.matchGame? SELF.matchGameId: SELF.createdGameId;
-                                SELF.wallet.updateTimeoutGameResult(gameId);
-                            }
-                        }
+                        SELF.processOngoingGame(gameId, game);
                         // console.log("Game started");
                         // SELF.gameState = game.state;
 
@@ -327,46 +285,116 @@ var SceneCreateGame = new Phaser.Class({
             callbackScope: SELF
         });
     },
-    waitingForMatch: function(){
-        var currentTime = Math.floor(Date.now() / 1000); 
-        if((game.attemptToMatchTimestamp + 60) > currentTime){
 
+    processOngoingGame(gameId, game){
+        var SELF = this;
+        if(SELF.gameState !== "GameInProgress" && SELF.gameState !== "UpdatingResult"){
+            console.log("Game started");
+            SELF.gameState = game.state;
+            
+            //TODO: notify user to move
+
+            if(game.attacks.length > SELF.playStep ){
+                // new step, need to update attack result onchain
+                SELF.playStep = game.attacks.length;
+
+                SELF.playerIndex = SELF.matchGame? 1 : 0;
+                var lastAttackStep = game.attacks[game.attacks.length - 1];
+                if(lastAttackStep.player == SELF.playerIndex && lastAttackStep.state === -1){
+                    var point = {
+                        x: game.attacks[game.attacks.length - 1].x,
+                        y: game.attacks[game.attacks.length - 1].y
+                    }
+                    var state = SELF.createdGame.shootAt(point);
+                    SELF.wallet.updateAttackResult(gameId, state);
+                }
+            }else{
+                if(game.attacks.length > 0){
+                    var lastAttackStep = game.attacks[game.attacks.length - 1];
+                    if(!SELF.attackStateUpdated && 
+                        lastAttackStep.player === (1 - SELF.playerIndex) &&
+                        lastAttackStep.state != -1){
+                        SELF.attackStateUpdated = true;
+                        
+                        var tx = (lastAttackStep.x * 40) + 565;
+                        var ty = (lastAttackStep.y * 40) + 40;
+
+                        var stateText = 'O';
+                        if(lastAttackStep.state === 1){
+                            stateText = 'x';
+                        }else if(lastAttackStep.state === 2){
+                            stateText = 'X';
+                        }
+                        
+                        this.add.text(tx, ty, stateText, { font: '16px Courier', fill: '#ffffff' });                                              
+                    }  
+                }                              
+            }                            
+        }else if(game.state === "GameEnded"){
             SELF.matchTimer.destroy();
+        }else{
+            // Update timeout game result
+            var currentTime = Math.floor(Date.now() / 1000); 
+            if(currentTime > (game.lastMoveTimestamp + ACTION_EXPIRE_TIMEOUT)){                
+                if(SELF.gameState !== "UpdatingResult"){
+                    SELF.gameState = "UpdatingResult";
+                    //SELF.matchTimer.destroy();
+                    var gameId = SELF.matchGame? SELF.matchGameId: SELF.createdGameId;
+                    SELF.wallet.updateTimeoutGameResult(gameId);
+                }
+            }
+        }        
+    },
+    waitingForMatch: function(game){
+        var SELF = this;
+        var currentTime = Math.floor(Date.now() / 1000); 
+        if((game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT) > currentTime){
 
-            SELF.add.text(200, 450, 'Do you want to accept user ' + game.playerAddress[1] + " challenge?", { font: '16px Courier', fill: '#ffffff' });
-            SELF.acceptGameBtn = SELF.util.addButton('btnAccept', 300, 500, function(event, scope){ 
-                //scope.scene.start('createGame');
-                console.log('accept game');
-                SELF.acceptGameBtn.destroy();
-                SELF.denyGameBtn.destroy();
-                SELF.wallet.acceptGame(SELF.createdGameId); 
-                SELF.time.addEvent(
-                    { 
-                        delay: 3000,
-                        repeat: 1,
-                        callback: function(){
-                            SELF.monitorGameStateChange();
-                        },
-                        callbackScope: SELF
-                    });
-            }, SELF, SELF);
+            //SELF.matchTimer.destroy();
+            if(!SELF.acceptGameBtn){
+                SELF.add.text(200, 450, 'Do you want to accept user ' + game.playerAddress[1] + " challenge?", { font: '16px Courier', fill: '#ffffff' });
+                SELF.acceptGameBtn = SELF.util.addButton('btnAccept', 300, 500, function(event, scope){ 
+                    //scope.scene.start('createGame');
+                    console.log('accept game');
+                    SELF.acceptGameBtn.destroy();
+                    SELF.denyGameBtn.destroy();
+                    SELF.acceptGameBtn = null;
+                    SELF.denyGameBtn = null;
+    
+                    SELF.wallet.acceptGame(SELF.createdGameId); 
+                    SELF.monitorGameStateChange();
+                    // SELF.time.addEvent(
+                    //     { 
+                    //         delay: 3000,
+                    //         repeat: 1,
+                    //         callback: function(){
+                                
+                    //         },
+                    //         callbackScope: SELF
+                    //     });
+                }, SELF, SELF);
+    
+                SELF.denyGameBtn = SELF.util.addButton('btnDeny', 400, 500, function(event, scope){ 
+                    //scope.scene.start('createGame');
+                    console.log('deny game');
+                    SELF.acceptGameBtn.destroy();
+                    SELF.denyGameBtn.destroy();
+                    SELF.acceptGameBtn = null;
+                    SELF.denyGameBtn = null;
+                    SELF.monitorGameStateChange();
+                    // SELF.time.addEvent(
+                    //     { 
+                    //         delay: 60000,
+                    //         repeat: 1,
+                    //         callback: function(){
+                    //             SELF.monitorGameStateChange();
+                    //         },
+                    //         callbackScope: SELF
+                    //     });
+    
+                }, SELF, SELF);
+            }
 
-            SELF.denyGameBtn = SELF.util.addButton('btnDeny', 400, 500, function(event, scope){ 
-                //scope.scene.start('createGame');
-                console.log('deny game');
-                SELF.acceptGameBtn.destroy();
-                SELF.denyGameBtn.destroy();
-                SELF.time.addEvent(
-                    { 
-                        delay: 60000,
-                        repeat: 1,
-                        callback: function(){
-                            SELF.monitorGameStateChange();
-                        },
-                        callbackScope: SELF
-                    });
-
-            }, SELF, SELF);
         }        
     },
     updateGame: function(){
