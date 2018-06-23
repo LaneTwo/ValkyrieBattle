@@ -299,12 +299,12 @@ WalletWrapper.prototype = {
         var listener = function(resp) {
         }
 
-        var createdGameId = localStorage.setItem("createdGameId");
+        var createdGameId = localStorage.getItem("createdGameId");
         var ownGameLayout = "";
         var salt = "";
 
         if(createdGameId == gameId){
-            ownGameLayout =  localStorage.getItem("createdGameLayout");
+            ownGameLayout = localStorage.getItem("createdGameLayout");
             salt =  localStorage.getItem("createdGameSalt");
         }else{
             ownGameLayout =  localStorage.getItem("challengeGameLayout");
@@ -312,9 +312,15 @@ WalletWrapper.prototype = {
         }
     
         var callFunction = "requestEndGame";
-        var callArgs = "["+ gameId.toString() + ",\""+ JSON.stringify(enemyGameLayout) + "\"," +
-            ",\""+ JSON.stringify(ownGameLayout) + "\"," + ",\""+ salt.toString() + "\"]";
-        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
+        var args = [
+            gameId, 
+            JSON.stringify(enemyGameLayout),
+            ownGameLayout,
+            salt.toString()
+        ]
+        //var callArgs = "["+ gameId.toString() + ",\""+ JSON.stringify(enemyGameLayout) + "\"," +
+        //    "\""+ JSON.stringify(ownGameLayout) + "\"," + "\""+ salt.toString() + "\"]";
+        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, JSON.stringify(args), {
             qrcode: {
                 showQRCode: false
             },
@@ -327,22 +333,23 @@ WalletWrapper.prototype = {
         var listener = function(resp) {
         }
 
-        var createdGameId = localStorage.setItem("createdGameId");
+        var createdGameId = localStorage.getItem("createdGameId");
         var ownGameLayout = "";
         var salt = "";
 
         if(createdGameId == gameId){
-            ownGameLayout =  localStorage.getItem("createdGameLayout");
+            //ownGameLayout =  localStorage.getItem("createdGameLayout");
             salt =  localStorage.getItem("createdGameSalt");
         }else{
-            ownGameLayout =  localStorage.getItem("challengeGameLayout");
+            //ownGameLayout =  localStorage.getItem("challengeGameLayout");
             salt =  localStorage.getItem("challengeGameSalt"); 
         }
     
-        var callFunction = "requestEndGame";
-        var callArgs = "["+ gameId.toString() + ",\""+ JSON.stringify(enemyGameLayout) + "\"," +
-            ",\""+ JSON.stringify(ownGameLayout) + "\"," + ",\""+ salt.toString() + "\"]";
-        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, callArgs, {
+        var callFunction = "challengeEnemy";
+        var args = [gameId, JSON.stringify(ownGameLayout), salt.toString()];
+        // var callArgs = "["+ gameId.toString() + ",\""+ JSON.stringify(enemyGameLayout) + "\"," +
+        //     "\""+ JSON.stringify(ownGameLayout) + "\"," + "\""+ salt.toString() + "\"]";
+        serialNumber = this.nebPay.call(this.contractAddress, 0, callFunction, JSON.stringify(args), {
             qrcode: {
                 showQRCode: false
             },

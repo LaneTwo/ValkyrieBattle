@@ -24,6 +24,7 @@ var SceneHome = new Phaser.Class({
 
     create: function ()
     {
+        var SELF = this;
         this.util.addButton('btnCreateGamge', 512, 200, function(event, scope){ 
             scope.scene.start('createGame');
         }, this, this);
@@ -35,7 +36,7 @@ var SceneHome = new Phaser.Class({
         }, this, this);
         this.util.addButton('btnSetName', 512, 380, function(event, scope){ 
             var playerName = prompt("Please enter your name", "player");
-            this.wallet.setName(playerName);
+            SELF.wallet.setName(playerName);
         }, this, this);
         
     },
