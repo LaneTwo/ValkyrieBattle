@@ -9,6 +9,8 @@ var ValkyrieBattleContract = function () {
     LocalContractStorage.defineMapProperty(this, "userNameMap");
 };
 
+const ACTION_EXPIRE_TIMEOUT = 120;
+
 ValkyrieBattleContract.prototype = {
     init: function () {
         this.owner = Blockchain.transaction.from;
@@ -63,7 +65,7 @@ ValkyrieBattleContract.prototype = {
         if(game.state !== "WaitingForMatch"){
             if(game.state === "WaitingForAccept"){
                 var currentTime = Math.floor(Date.now() / 1000); 
-                if(currentTime < (game.attemptToMatchTimestamp + 60)){
+                if(currentTime < (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
                     cannotMatchGame = true;
                 }
             }else{
@@ -96,7 +98,7 @@ ValkyrieBattleContract.prototype = {
             throw new Error("Can only accept ready to start game");
         }else{
             var currentTime = Math.floor(Date.now() / 1000); 
-            if(currentTime > (game.attemptToMatchTimestamp + 60)){
+            if(currentTime > (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
                 throw new Error("Can't accept expired game.");
             }
 
@@ -281,7 +283,7 @@ ValkyrieBattleContract.prototype = {
         if(game.state !== "WaitingForMatch"){
             if(game.state === "WaitingForAccept"){
                 var currentTime = Math.floor(Date.now() / 1000); 
-                if(currentTime < (game.attemptToMatchTimestamp + 60)){
+                if(currentTime < (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
                     gameNotStarted = false;
                 }
             }else{
@@ -342,7 +344,7 @@ ValkyrieBattleContract.prototype = {
                 unmatchedGames.push(game);
             }else if(game.state === "WaitingForAccept"){
                 var currentTime = Math.floor(Date.now() / 1000); 
-                if((game.attemptToMatchTimestamp + 60) < currentTime){
+                if((game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT) < currentTime){
                     unmatchedGames.push(game);
                 }
             }
@@ -435,7 +437,7 @@ ValkyrieBattleContract.prototype = {
     _updateUserLeaderboard: function(address, isWon){
         var userIndex = 0;
         var newUser = true;
-        for(var i = 0; i < this.leaderboardArray.length; i++){
+        for(userIndex = 0; userIndex < this.leaderboardArray.length; userIndex++){
             if(this.leaderboardArray[userIndex].address === address){
                 newUser = false;
                 break;

@@ -22,7 +22,7 @@ var SceneListGame = new Phaser.Class({
 
         this.wallet.getUnmatchedGame(games =>{
             if(games.length == 0){
-                this.add.text(200, 300, 'There is no games openning for match, you can create one to wait for others.', { font: '32px Courier', fill: '#ffffff' });
+                this.add.text(200, 300, 'There is no games openning for match, you can create one to wait for others.', { font: '18px Courier', fill: '#ffffff' });
             }else{
                 for(var i = 0; i < games.length; i++){
                     var player = games[i].players[0];

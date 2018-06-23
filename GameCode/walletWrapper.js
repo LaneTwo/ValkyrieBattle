@@ -1,6 +1,6 @@
 
 WalletWrapper = function(){
-    this.contractAddress = "n1uLx1U5rjZS6yjTXdhB9egFYiv7X5MRajs";
+    this.contractAddress = "n1p3uJExgwV9RD2aKQJnpEKy7xU4yatFv1Z";
     var NebPay = require("nebpay");
     //this.callbackUrl = NebPay.config.mainnetUrl;    
     this.callbackUrl = NebPay.config.testnetUrl;
@@ -218,7 +218,7 @@ WalletWrapper.prototype = {
             }
         });
         this.timer = setTimeout(() => {
-            this.queryCreatedGame(planeLayout, salt);
+            this.queryCreatedGame(planeLayout, salt, callback);
         }, 3000);
     },
 
