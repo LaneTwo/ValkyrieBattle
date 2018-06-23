@@ -8,6 +8,7 @@ var SceneHome = new Phaser.Class({
     {
         Phaser.Scene.call(this, { key: 'home' });
         this.util = new Util();
+        this.wallet = new WalletWrapper();
     },
 
     preload: function ()
@@ -17,6 +18,7 @@ var SceneHome = new Phaser.Class({
         this.load.image('btnListGamge', 'images/listGame.png');
         this.load.image('btnMatchGamge', 'images/matchGame.png');
         this.load.image('btnLeaderboard', 'images/leaderboard.png');
+        this.load.image('btnSetName', 'images/setname.png');
         this.load.image('btnMatch', 'images/match.png');
     },
 
@@ -25,11 +27,15 @@ var SceneHome = new Phaser.Class({
         this.util.addButton('btnCreateGamge', 512, 200, function(event, scope){ 
             scope.scene.start('createGame');
         }, this, this);
-        this.util.addButton('btnListGamge', 512, 270, function(event, scope){ 
+        this.util.addButton('btnListGamge', 512, 260, function(event, scope){ 
             scope.scene.start('listGame');
         }, this, this);
-        this.util.addButton('btnLeaderboard', 512, 340, function(event, scope){ 
+        this.util.addButton('btnLeaderboard', 512, 320, function(event, scope){ 
             scope.scene.start('leaderboard');
+        }, this, this);
+        this.util.addButton('btnSetName', 512, 380, function(event, scope){ 
+            var playerName = prompt("Please enter your name", "player");
+            this.wallet.setName(playerName);
         }, this, this);
         
     },
