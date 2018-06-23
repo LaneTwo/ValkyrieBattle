@@ -11,9 +11,9 @@ var SceneCreateGame = new Phaser.Class({
         this.cursors;
         this.selectedPlane;
 
-        this.graphics;
-        this.timerEvent;
-        this.clockSize = 30;
+        this.timerText;
+        this.timedEvent;
+
         this.createdGame = new Game();
         this.createdGame.init();
         this.util = new Util();
@@ -25,7 +25,6 @@ var SceneCreateGame = new Phaser.Class({
         this.playerIndex = 0;
         this.attackStateUpdated = false;
     },
-
 
     init: function(param){
         console.log('------------->');
@@ -48,11 +47,10 @@ var SceneCreateGame = new Phaser.Class({
     create: function() {
         var SELF = this;
 
-        this.graphics = this.add.graphics({ x: 0, y: 0 });
-        this.timerEvent = this.time.addEvent({ delay: 5000, timeScale: 0.5 });
-
         this.add.text(250, 5, 'Mine Planes', { font: '16px Courier', fill: '#ffffff' });
         this.add.text(700, 5, 'Enemy Planes', { font: '16px Courier', fill: '#ffffff' });
+
+        this.timerText = this.add.text(5, 30, '倒计时: 15', { font: '16px Courier', fill: '#ffffff' });
 
         var mineGrid = drawGrid(400, 400, this.add.graphics({x: 100, y: 30}));
         var enemyGrid = drawGrid(400, 400, this.add.graphics({x: 550, y: 30}));
@@ -197,15 +195,11 @@ var SceneCreateGame = new Phaser.Class({
                         //var tx = (xCell * 40) + 565;
                         //var ty = (yCell * 40) + 40;
                         
-                        //this.add.text(tx, ty, 'x', { font: '16px Courier', fill: '#ffffff' });    
                     }
                 }
 
-    
-                // SELF.graphics.clear();
-                // SELF.drawClock(50, 50, SELF.timerEvent);
+                SELF.timedEvent = SELF.time.addEvent({ delay: 1000, callback: SELF.onEvent, callbackScope: SELF, repeat: 15 });
             }
-
 
         }, this);
 
@@ -432,88 +426,11 @@ var SceneCreateGame = new Phaser.Class({
             }
             this.planes[i].setAngle(this.planes[i].getAngle());
         }
-            // SELF.graphics.clear();
-            // SELF.drawClock(50, 50, SELF.timerEvent);
-
-        // if (this.cursors && this.cursors.left.isDown) {
-        //     this.selectedPlane.setAngle(-90);
-        // } else if (this.cursors && this.cursors.right.isDown) {
-        //     this.selectedPlane.setAngle(90);
-        // } else if (this.cursors && this.cursors.up.isDown) {
-        //     this.selectedPlane.setAngle(0);
-        // } else if (this.cursors && this.cursors.down.isDown) {
-        //     this.selectedPlane.setAngle(180);
-        // }
 
     },
 
-    drawClock: function(x, y, timer) {
-        //  Progress is between 0 and 1, where 0 = the hand pointing up and then rotating clockwise a full 360
-
-        //  The frame
-        this.graphics.lineStyle(3, 0xffffff, 1);
-        this.graphics.strokeCircle(x, y, this.clockSize);
-
-        var angle;
-        var dest;
-        var p1;
-        var p2;
-        var size;
-
-        //  The overall progress hand (only if repeat > 0)
-        if (timer.repeat > 0) {
-            size = clockSize * 0.9;
-
-            angle = (360 * timer.getOverallProgress()) - 90;
-            dest = Phaser.Math.RotateAroundDistance({ x: x, y: y }, x, y, Phaser.Math.DegToRad(angle), size);
-
-            graphics.lineStyle(2, 0xff0000, 1);
-
-            graphics.beginPath();
-
-            graphics.moveTo(x, y);
-
-            p1 = Phaser.Math.RotateAroundDistance({ x: x, y: y }, x, y, Phaser.Math.DegToRad(angle - 5), size * 0.7);
-
-            graphics.lineTo(p1.x, p1.y);
-            graphics.lineTo(dest.x, dest.y);
-
-            graphics.moveTo(x, y);
-
-            p2 = Phaser.Math.RotateAroundDistance({ x: x, y: y }, x, y, Phaser.Math.DegToRad(angle + 5), size * 0.7);
-
-            graphics.lineTo(p2.x, p2.y);
-            graphics.lineTo(dest.x, dest.y);
-
-            graphics.strokePath();
-            graphics.closePath();
-        }
-
-        //  The current iteration hand
-        size = this.clockSize * 0.95;
-
-        angle = (360 * timer.getProgress()) - 90;
-        dest = Phaser.Math.RotateAroundDistance({ x: x, y: y }, x, y, Phaser.Math.DegToRad(angle), size);
-
-        this.graphics.lineStyle(2, 0xffff00, 1);
-
-        this.graphics.beginPath();
-
-        this.graphics.moveTo(x, y);
-
-        p1 = Phaser.Math.RotateAroundDistance({ x: x, y: y }, x, y, Phaser.Math.DegToRad(angle - 5), size * 0.7);
-
-        this.graphics.lineTo(p1.x, p1.y);
-        this.graphics.lineTo(dest.x, dest.y);
-
-        this.graphics.moveTo(x, y);
-
-        p2 = Phaser.Math.RotateAroundDistance({ x: x, y: y }, x, y, Phaser.Math.DegToRad(angle + 5), size * 0.7);
-
-        this.graphics.lineTo(p2.x, p2.y);
-        this.graphics.lineTo(dest.x, dest.y);
-
-        this.graphics.strokePath();
-        this.graphics.closePath();
+    onEvent: function () {
+        this.timerText.setText('倒计时: ' + this.timedEvent.repeatCount);
     }
+
 });
