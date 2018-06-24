@@ -163,6 +163,8 @@ var SceneCreateGame = new Phaser.Class({
         this.input.setDraggable(this.enemyPlanes[1]);
         this.input.setDraggable(this.enemyPlanes[2]);
 
+        this.updateGame(SELF.enemyGame, SELF.enemyPlanes);
+
         this.updatePlanDraggable();
         this.util.addButton('btnMainmenu', 80, 30, function(event, scope){ 
             scope.scene.start('home');
@@ -272,7 +274,12 @@ var SceneCreateGame = new Phaser.Class({
                 var gameId = SELF.matchGame? SELF.matchGameId : SELF.createdGameId;
                 SELF.wallet.getGame(gameId, game =>{
                     if(game.state === "WaitingForAccept"){
-                        SELF.timerTick = InternetStandardTime - game.attemptToMatchTimestamp;
+                        var timerTick = ACTION_EXPIRE_TIMEOUT + game.attemptToMatchTimestamp - InternetStandardTime;
+                        if(timerTick <= 0){
+                            timerTick = 0;
+                        }
+                        SELF.timerTick = timerTick;
+
                         if(SELF.gameState !== "WaitingForConfirm" &&
                             InternetStandardTime < (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
                             SELF.gameState = game.state;
@@ -282,17 +289,25 @@ var SceneCreateGame = new Phaser.Class({
                         }
                         SELF.boardMask.visible = true;
                     }else if(game.state === "GameInProgress"){
-                        SELF.timerTick = InternetStandardTime - game.lastMoveTimestamp;
+                        var timerTick = ACTION_EXPIRE_TIMEOUT + game.lastMoveTimestamp - InternetStandardTime;
+                        if(timerTick <= 0){
+                            timerTick = 0;                            
+                        }
+                        SELF.timerTick = timerTick;
+
                         SELF.processOngoingGame(gameId, game);
                     }else if(game.state === "EndGameRequested"){
-                        SELF.timerTick = InternetStandardTime - game.lastMoveTimestamp;
+                        var timerTick = ACTION_EXPIRE_TIMEOUT + game.lastMoveTimestamp - InternetStandardTime;
+                        if(timerTick <= 0){
+                            timerTick = 0;                            
+                        }
+                        SELF.timerTick = timerTick;
                         SELF.boardMask.visible = true;
                         if(InternetStandardTime > (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
                             if(SELF.gameState !== "WaitingConfirmForTimeout"){
                                 SELF.wallet.updateTimeoutGameResult(game.gameId);
                                 SELF.gameState = "WaitingConfirmForTimeout";
-                            }
-                            
+                            }                            
                         }else{
                             // TODO: draw enemy's result and ask user whether to accept result or challenge the result 
                             // TODO: get salt from localstorage
@@ -438,7 +453,7 @@ var SceneCreateGame = new Phaser.Class({
                         SELF.attackStateUpdated = true;
                         
                         var tx = (lastAttackStep.x * 40) + 565;
-                        var ty = (lastAttackStep.y * 40) + 40;
+                        var ty = (lastAttackStep.y * 40) + 10 + GAME_BOARD_OFFSETY;
 
                         var stateText = 'O';
                         if(lastAttackStep.state === 1){
@@ -458,7 +473,14 @@ var SceneCreateGame = new Phaser.Class({
         }else{
             // Update timeout game result
             //var currentTime = Math.floor(Date.now() / 1000); 
-
+            if(InternetStandardTime > (game.lastMoveTimestamp + ACTION_EXPIRE_TIMEOUT)){                
+                if(SELF.gameState !== "UpdatingResult"){
+                    SELF.gameState = "UpdatingResult";
+                    //SELF.matchTimer.destroy();
+                    var gameId = SELF.matchGame? SELF.matchGameId: SELF.createdGameId;
+                    SELF.wallet.updateTimeoutGameResult(gameId);
+                }
+            }
         }        
     },
     waitingForMatch: function(game){
@@ -468,7 +490,7 @@ var SceneCreateGame = new Phaser.Class({
 
             //SELF.matchTimer.destroy();
             if(!SELF.acceptGameBtn){
-                SELF.notificationText = SELF.add.text(200, GRID_SIZE + GAME_BOARD_OFFSETY + 50, 'Do you want to accept user ' + game.playerAddress[1] + " challenge?", { font: '16px Courier', fill: '#ffffff' });
+                SELF.notificationText = SELF.add.text(200, GRID_SIZE + GAME_BOARD_OFFSETY + 20, 'Do you want to accept user ' + game.playerAddress[1] + " challenge?", { font: '16px Courier', fill: '#ffffff' });
                 SELF.acceptGameBtn = SELF.util.addButton('btnAccept', 200, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                     //scope.scene.start('createGame');
                     console.log('accept game');

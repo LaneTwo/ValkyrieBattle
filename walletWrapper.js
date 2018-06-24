@@ -1,6 +1,6 @@
 
 WalletWrapper = function(){
-    this.contractAddress = "n1p3uJExgwV9RD2aKQJnpEKy7xU4yatFv1Z";
+    this.contractAddress = "n1oJPDbW3qUC2BY1AGGVNN1xuvNsWmKgCQF";
     var NebPay = require("nebpay");
     //this.callbackUrl = NebPay.config.mainnetUrl;    
     this.callbackUrl = NebPay.config.testnetUrl;
