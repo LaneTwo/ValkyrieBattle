@@ -160,7 +160,7 @@ ValkyrieBattleContract.prototype = {
         }
         
         var currentTime = Math.floor(Date.now() / 1000); 
-        if(currentTime > (game.lastMoveTimestamp + 90)){
+        if(currentTime > (game.lastMoveTimestamp + ACTION_EXPIRE_TIMEOUT)){
             this._updateGameResult(gameId, 1 - game.currentPlayer, 1);
         }else{
             var attack = game.attacks[game.attacks.length - 1];
@@ -219,7 +219,7 @@ ValkyrieBattleContract.prototype = {
         }
 
         var currentTime = Math.floor(Date.now() / 1000); 
-        if(currentTime > (game.lastMoveTimestamp + 90)){
+        if(currentTime > (game.lastMoveTimestamp + ACTION_EXPIRE_TIMEOUT)){
             this._updateGameResult(gameId, game.currentPlayer, 1);
         }else{
             var ownGameHash = this._MD5(ownGameLayout + salt);
@@ -309,7 +309,7 @@ ValkyrieBattleContract.prototype = {
         }
 
         var currentTime = Math.floor(Date.now() / 1000); 
-        if(currentTime > (game.lastMoveTimestamp + 90)){
+        if(currentTime > (game.lastMoveTimestamp + ACTION_EXPIRE_TIMEOUT)){
 
             var winner = 1 - game.currentPlayer;
             if(game.state === "EndGameRequested"){
