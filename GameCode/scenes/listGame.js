@@ -15,11 +15,16 @@ var SceneListGame = new Phaser.Class({
     preload: function ()
     {
         this.load.image('btnMatch', 'images/match.png');
+        this.load.image('btnMainmenu', 'images/mainmenu.png');
     },
     create: function ()
     {
         var SELF = this;
 
+        this.util.addButton('btnMainmenu', 80, 30, function(event, scope){ 
+            scope.scene.start('home');
+        }, this, this);
+        
         this.wallet.getUnmatchedGame(games =>{
             if(games.length == 0){
                 this.add.text(200, 300, 'There is no games openning for match, you can create one to wait for others.', { font: '18px Courier', fill: '#ffffff' });

@@ -9,14 +9,19 @@ var SceneLeaderboard = new Phaser.Class({
         Phaser.Scene.call(this, { key: 'leaderboard' });
 
         this.wallet = new WalletWrapper();
+        this.util = new Util();
     },
 
     preload: function ()
     {
-        
+        this.load.image('btnMainmenu', 'images/mainmenu.png');
     },
     create: function ()
     {
+        this.util.addButton('btnMainmenu', 80, 30, function(event, scope){ 
+            scope.scene.start('home');
+        }, this, this);
+
         this.wallet.getLeaderboard(results => {
             if(results.length == 0){
                 this.add.text(200, 300, 'There is no games ended, you can create one to play with others.', { font: '18px Courier', fill: '#ffffff' });
