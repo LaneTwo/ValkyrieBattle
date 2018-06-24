@@ -1,4 +1,7 @@
 const ACTION_EXPIRE_TIMEOUT = 120;
+const GAME_BOARD_OFFSETY = 80;
+const GRID_SIZE = 400;
+const ACTION_BUTTON_OFFSETY = GAME_BOARD_OFFSETY + GRID_SIZE + 70;
 
 var SceneCreateGame = new Phaser.Class({
 
@@ -47,23 +50,24 @@ var SceneCreateGame = new Phaser.Class({
         this.load.image('btnEndGame', 'images/endgame.png');
         this.load.image('btnCancel', 'images/cancel.png');
         this.load.image('enemyplane', 'images/enemyplane.png');
+        this.load.image('btnMainmenu', 'images/mainmenu.png');
     },
     
     create: function() {
         var SELF = this;
 
-        this.add.text(250, 5, 'Mine Planes', { font: '16px Courier', fill: '#ffffff' });
-        this.add.text(700, 5, 'Enemy Planes', { font: '16px Courier', fill: '#ffffff' });
+        this.add.text(250, 25, '自己飞机', { font: '16px Courier', fill: '#ffffff' });
+        this.add.text(700, 25, '敌人飞机', { font: '16px Courier', fill: '#ffffff' });
 
-        this.timerText = this.add.text(5, 30, '倒计时: 15', { font: '16px Courier', fill: '#ffffff' });
+        this.timerText = this.add.text(5, GAME_BOARD_OFFSETY, '倒计时: 15', { font: '16px Courier', fill: '#ffffff' });
 
-        var mineGrid = drawGrid(400, 400, this.add.graphics({x: 100, y: 30}));
-        var enemyGrid = drawGrid(400, 400, this.add.graphics({x: 550, y: 30}));
+        var mineGrid = drawGrid(400, 400, this.add.graphics({x: 100, y: GAME_BOARD_OFFSETY}));
+        var enemyGrid = drawGrid(400, 400, this.add.graphics({x: 550, y: GAME_BOARD_OFFSETY}));
 
         //  A drop zone
         // var zone = this.add.zone(290, 205, 400, 400).setDropZone();
         // zone.input.dropZone = true;
-        var zone = this.add.zone(100, 30, 1800, 1600).setDropZone();
+        var zone = this.add.zone(100, GAME_BOARD_OFFSETY, 1800, 1600).setDropZone();
         zone.input.dropZone = true;
         // var enemyZone = this.add.zone(630, 30, 400, 400).setDropZone();
         // enemyZone.input.dropZone = true;
@@ -88,7 +92,7 @@ var SceneCreateGame = new Phaser.Class({
         this.enemyPlanes[2].visible = false;
 
         if(SELF.matchGame){
-            SELF.matchGameBtn = this.util.addButton('btnMatchGamge', 300, 500, function(event, scope){ 
+            SELF.matchGameBtn = this.util.addButton('btnMatchGamge', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                 //scope.scene.start('createGame');
                 console.log('match game');
                 SELF.matchGameBtn.destroy();
@@ -108,7 +112,7 @@ var SceneCreateGame = new Phaser.Class({
         }else{
             var previousCreatedGame = SELF.wallet.loadCreatedGame();
             if(previousCreatedGame.gameId < 0){
-                SELF.createGameBtn = this.util.addButton('btnCreateGamge', 300, 500, function(event, scope){ 
+                SELF.createGameBtn = this.util.addButton('btnCreateGamge', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                     //scope.scene.start('createGame');
                     console.log('create game');
                     SELF.createGameBtn.destroy();
@@ -154,6 +158,10 @@ var SceneCreateGame = new Phaser.Class({
         this.input.setDraggable(this.enemyPlanes[2]);
 
         this.updatePlanDraggable();
+        this.util.addButton('btnMainmenu', 80, 30, function(event, scope){ 
+            scope.scene.start('home');
+        }, this, this);
+
 
         this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
             
@@ -174,7 +182,7 @@ var SceneCreateGame = new Phaser.Class({
             }
             console.log(gameObject.x + "," + gameObject.y);
             var offsetX = gameObject.isEnemyPlane? 550: 100;
-            gameObject.updateGridPosition(gameObject.x - offsetX, gameObject.y - 30);
+            gameObject.updateGridPosition(gameObject.x - offsetX, gameObject.y - GAME_BOARD_OFFSETY);
 
             // if(!SELF.createdGame.addPlane(gameObject.plane)){
             //     gameObject.x = gameObject.input.dragStartX;
@@ -202,10 +210,10 @@ var SceneCreateGame = new Phaser.Class({
                     var y = pointer.y;
         
                     // add enemy plane status
-                    if ((x > 550 && x < 950) && ( y > 30 && y < 430)) {
+                    if ((x > 550 && x < 950) && ( y > GAME_BOARD_OFFSETY && y < (400 + GAME_BOARD_OFFSETY))) {
         
                         var xCell = parseInt((x - 550) / 40);
-                        var yCell = parseInt((y - 30) / 40);
+                        var yCell = parseInt((y - GAME_BOARD_OFFSETY) / 40);
                         console.log("x: " + xCell + ", y: " + yCell);
                         var gameId = SELF.matchGame? SELF.matchGameId : SELF.createdGameId;
                         
@@ -322,7 +330,7 @@ var SceneCreateGame = new Phaser.Class({
     processOngoingGame(gameId, game){
         var SELF = this;
         SELF.playerIndex = SELF.matchGame? 1 : 0;
-        
+
         if(game.state === "GameInProgress" && SELF.gameState !== "UpdatingResult"){
 
             if(SELF.gameState !== "GameInProgress" && SELF.gameState !== "UpdatingResult"){
@@ -333,14 +341,14 @@ var SceneCreateGame = new Phaser.Class({
             }
 
             if(!SELF.requestEndGameBtn){
-                SELF.requestEndGameBtn = SELF.util.addButton('btnRequestEnd', 300, 500, function(event, scope){ 
+                SELF.requestEndGameBtn = SELF.util.addButton('btnRequestEnd', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                     //scope.scene.start('createGame');
                     console.log('request end game');
                     SELF.requestEndGameBtn.visible = false;
                     //SELF.requestEndGameBtn = null;
 
                     if(!SELF.endGameBtn){
-                        SELF.endGameBtn = SELF.util.addButton('btnEndGame', 220, 500, function(event, scope){ 
+                        SELF.endGameBtn = SELF.util.addButton('btnEndGame', 220, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                             //scope.scene.start('createGame');
                             console.log('request end game');
                             SELF.endGameBtn.visible = false;
@@ -360,7 +368,7 @@ var SceneCreateGame = new Phaser.Class({
                     }
 
                     if(!SELF.cancelBtn){
-                        SELF.cancelBtn = SELF.util.addButton('btnCancel', 420, 500, function(event, scope){ 
+                        SELF.cancelBtn = SELF.util.addButton('btnCancel', 420, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                             //scope.scene.start('createGame');
                             console.log('cancel end game');
                             SELF.endGameBtn.visible = false;
@@ -444,21 +452,22 @@ var SceneCreateGame = new Phaser.Class({
 
             //SELF.matchTimer.destroy();
             if(!SELF.acceptGameBtn){
-                SELF.add.text(200, 450, 'Do you want to accept user ' + game.playerAddress[1] + " challenge?", { font: '16px Courier', fill: '#ffffff' });
-                SELF.acceptGameBtn = SELF.util.addButton('btnAccept', 300, 500, function(event, scope){ 
+                SELF.notificationText = SELF.add.text(200, GRID_SIZE + 50, 'Do you want to accept user ' + game.playerAddress[1] + " challenge?", { font: '16px Courier', fill: '#ffffff' });
+                SELF.acceptGameBtn = SELF.util.addButton('btnAccept', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                     //scope.scene.start('createGame');
                     console.log('accept game');
                     SELF.acceptGameBtn.destroy();
                     SELF.denyGameBtn.destroy();
                     SELF.acceptGameBtn = null;
                     SELF.denyGameBtn = null;
+                    SELF.notificationText.setText('');
     
                     SELF.gameState = "WaitingForConfirm";
                     SELF.wallet.acceptGame(SELF.createdGameId); 
                     //SELF.monitorGameStateChange();
                 }, SELF, SELF);
     
-                SELF.denyGameBtn = SELF.util.addButton('btnDeny', 400, 500, function(event, scope){ 
+                SELF.denyGameBtn = SELF.util.addButton('btnDeny', 400, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                     //scope.scene.start('createGame');
                     console.log('deny game');
                     SELF.acceptGameBtn.destroy();
@@ -503,7 +512,7 @@ var SceneCreateGame = new Phaser.Class({
             var pos = this.planes[i].getDrawPosition();
             if(pos.x >= 0 && pos.y >= 0){
                 this.planes[i].x = pos.x + 100;
-                this.planes[i].y = pos.y + 30;
+                this.planes[i].y = pos.y + GAME_BOARD_OFFSETY;
             }
             this.planes[i].setAngle(this.planes[i].getAngle());
         }
@@ -516,7 +525,7 @@ var SceneCreateGame = new Phaser.Class({
                 var pos = this.enemyPlanes[i].getDrawPosition();
                 if(pos.x >= 0 && pos.y >= 0){
                     this.enemyPlanes[i].x = pos.x + 550;
-                    this.enemyPlanes[i].y = pos.y + 30;
+                    this.enemyPlanes[i].y = pos.y + GAME_BOARD_OFFSETY;
                 }
                 this.enemyPlanes[i].setAngle(this.enemyPlanes[i].getAngle());
                 this.enemyPlanes[i].visible = true;
