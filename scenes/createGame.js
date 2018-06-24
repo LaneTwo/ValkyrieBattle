@@ -25,10 +25,11 @@ var SceneCreateGame = new Phaser.Class({
         this.wallet = new WalletWrapper();
         this.matchGame = false;
         this.matchGameId = -1; 
-        this.gameState = "WaitingForMatch";
+        this.gameState = "InitPlaneLayout";
         this.playStep = 0;
         this.playerIndex = 0;
         this.attackStateUpdated = false;
+        this.timerTick = 0;
     },
 
     init: function(param){
@@ -50,6 +51,7 @@ var SceneCreateGame = new Phaser.Class({
         this.load.image('btnEndGame', 'images/endgame.png');
         this.load.image('btnCancel', 'images/cancel.png');
         this.load.image('enemyplane', 'images/enemyplane.png');
+        this.load.image('mask', 'images/mask.png');
         this.load.image('btnMainmenu', 'images/mainmenu.png');
     },
     
@@ -63,6 +65,9 @@ var SceneCreateGame = new Phaser.Class({
 
         var mineGrid = drawGrid(400, 400, this.add.graphics({x: 100, y: GAME_BOARD_OFFSETY}));
         var enemyGrid = drawGrid(400, 400, this.add.graphics({x: 550, y: GAME_BOARD_OFFSETY}));
+
+        SELF.boardMask = this.add.sprite(550 + 200, GAME_BOARD_OFFSETY + 200, 'mask');
+        SELF.boardMask.visible = true;
 
         //  A drop zone
         // var zone = this.add.zone(290, 205, 400, 400).setDropZone();
@@ -140,6 +145,7 @@ var SceneCreateGame = new Phaser.Class({
             }
         }
 
+        SELF.timedEvent = SELF.time.addEvent({ delay: 1000, callback: SELF.onEvent, callbackScope: SELF, loop: true });
         this.children.add(this.planes[0]);
         this.children.add(this.planes[1]);
         this.children.add(this.planes[2]);
@@ -223,9 +229,7 @@ var SceneCreateGame = new Phaser.Class({
                         //var ty = (yCell * 40) + 40;
                         
                     }
-                }
-
-                SELF.timedEvent = SELF.time.addEvent({ delay: 1000, callback: SELF.onEvent, callbackScope: SELF, repeat: 15 });
+                }                
             }
 
         }, this);
@@ -256,6 +260,10 @@ var SceneCreateGame = new Phaser.Class({
     monitorGameStateChange: function(){
         var SELF = this;
 
+        for(var i = 0; i < this.planes.length; i++){
+            this.planes[i].input.draggable = false;
+        } 
+
         SELF.matchTimer = this.time.addEvent(
         { 
             delay: 3000,
@@ -264,6 +272,7 @@ var SceneCreateGame = new Phaser.Class({
                 var gameId = SELF.matchGame? SELF.matchGameId : SELF.createdGameId;
                 SELF.wallet.getGame(gameId, game =>{
                     if(game.state === "WaitingForAccept"){
+                        SELF.timerTick = InternetStandardTime - game.attemptToMatchTimestamp;
                         if(SELF.gameState !== "WaitingForConfirm" &&
                             InternetStandardTime < (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
                             SELF.gameState = game.state;
@@ -271,9 +280,13 @@ var SceneCreateGame = new Phaser.Class({
                                 SELF.waitingForMatch(game);
                             }
                         }
+                        SELF.boardMask.visible = true;
                     }else if(game.state === "GameInProgress"){
+                        SELF.timerTick = InternetStandardTime - game.lastMoveTimestamp;
                         SELF.processOngoingGame(gameId, game);
                     }else if(game.state === "EndGameRequested"){
+                        SELF.timerTick = InternetStandardTime - game.lastMoveTimestamp;
+                        SELF.boardMask.visible = true;
                         if(InternetStandardTime > (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
                             if(SELF.gameState !== "WaitingConfirmForTimeout"){
                                 SELF.wallet.updateTimeoutGameResult(game.gameId);
@@ -304,6 +317,7 @@ var SceneCreateGame = new Phaser.Class({
                             }
                         }   
                     }else if(game.state === "GameEnded"){
+                        SELF.boardMask.visible = true;
                         console.log("Game end");
                         SELF.gameState = game.state;
 
@@ -373,6 +387,7 @@ var SceneCreateGame = new Phaser.Class({
                             console.log('cancel end game');
                             SELF.endGameBtn.visible = false;
                             SELF.cancelBtn.visible = false;
+                            SELF.requestEndGameBtn.visible = true;
         
                             console.log('End game');
                             SELF.requestingEndGame = false;
@@ -400,6 +415,7 @@ var SceneCreateGame = new Phaser.Class({
                 }
             }
 
+            SELF.boardMask.visible = SELF.playerIndex !== game.currentPlayer;
             if(game.attacks.length > SELF.playStep ){
                 // new step, need to update attack result onchain
                 SELF.playStep = game.attacks.length;
@@ -452,14 +468,13 @@ var SceneCreateGame = new Phaser.Class({
 
             //SELF.matchTimer.destroy();
             if(!SELF.acceptGameBtn){
-                SELF.notificationText = SELF.add.text(200, GRID_SIZE + 50, 'Do you want to accept user ' + game.playerAddress[1] + " challenge?", { font: '16px Courier', fill: '#ffffff' });
-                SELF.acceptGameBtn = SELF.util.addButton('btnAccept', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
+                SELF.notificationText = SELF.add.text(200, GRID_SIZE + GAME_BOARD_OFFSETY + 50, 'Do you want to accept user ' + game.playerAddress[1] + " challenge?", { font: '16px Courier', fill: '#ffffff' });
+                SELF.acceptGameBtn = SELF.util.addButton('btnAccept', 200, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                     //scope.scene.start('createGame');
                     console.log('accept game');
-                    SELF.acceptGameBtn.destroy();
-                    SELF.denyGameBtn.destroy();
-                    SELF.acceptGameBtn = null;
-                    SELF.denyGameBtn = null;
+
+                    SELF.acceptGameBtn.visible = false;
+                    SELF.denyGameBtn.visible = false;
                     SELF.notificationText.setText('');
     
                     SELF.gameState = "WaitingForConfirm";
@@ -470,13 +485,14 @@ var SceneCreateGame = new Phaser.Class({
                 SELF.denyGameBtn = SELF.util.addButton('btnDeny', 400, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                     //scope.scene.start('createGame');
                     console.log('deny game');
-                    SELF.acceptGameBtn.destroy();
-                    SELF.denyGameBtn.destroy();
-                    SELF.acceptGameBtn = null;
-                    SELF.denyGameBtn = null;
+                    SELF.acceptGameBtn.visible = false;
+                    SELF.denyGameBtn.visible = false;
                     //SELF.monitorGameStateChange();
     
                 }, SELF, SELF);
+            }else{
+                SELF.acceptGameBtn.visible = true;
+                SELF.denyGameBtn.visible = true;
             }
 
         }        
@@ -540,7 +556,7 @@ var SceneCreateGame = new Phaser.Class({
     },
 
     onEvent: function () {
-        this.timerText.setText('倒计时: ' + this.timedEvent.repeatCount);
+        this.timerText.setText('倒计时: ' + this.timerTick);
     }
 
 });
