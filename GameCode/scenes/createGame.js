@@ -303,7 +303,7 @@ var SceneCreateGame = new Phaser.Class({
                         }
                         SELF.timerTick = timerTick;
                         SELF.boardMask.visible = true;
-                        if(InternetStandardTime > (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
+                        if(InternetStandardTime > (game.lastMoveTimestamp + ACTION_EXPIRE_TIMEOUT)){
                             if(SELF.gameState !== "WaitingConfirmForTimeout"){
                                 SELF.wallet.updateTimeoutGameResult(game.gameId);
                                 SELF.gameState = "WaitingConfirmForTimeout";
@@ -360,6 +360,10 @@ var SceneCreateGame = new Phaser.Class({
         var SELF = this;
         SELF.playerIndex = SELF.matchGame? 1 : 0;
 
+        if(SELF.acceptGameBtn && SELF.acceptGameBtn.visible){
+            SELF.acceptGameBtn.visible = false;
+            SELF.denyGameBtn.visible = false;
+        }
         if(game.state === "GameInProgress" && SELF.gameState !== "UpdatingResult"){
 
             if(SELF.gameState !== "GameInProgress" && SELF.gameState !== "UpdatingResult"){
