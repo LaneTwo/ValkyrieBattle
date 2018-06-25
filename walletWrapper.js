@@ -1,9 +1,14 @@
 
 WalletWrapper = function(){
-    this.contractAddress = "n1dvRPS5eZ9pUtdCVcvwFw7HnC7DrvuhApS";
     var NebPay = require("nebpay");
-    //this.callbackUrl = NebPay.config.mainnetUrl;    
-    this.callbackUrl = NebPay.config.testnetUrl;
+    // testnet
+    //this.contractAddress = "n1vFw4aCeGAjfsLVRygF2WV9b4UmzudcsZV";
+    //this.callbackUrl = NebPay.config.testnetUrl;
+
+    // mainnet
+    this.contractAddress = "n1yKAKoQwtBabzEf9X9fsBAGtb2c7Lb7N2S";
+    this.callbackUrl = NebPay.config.mainnetUrl;    
+    
     this.nebPay = new NebPay();
     this.timer = null;
 }
@@ -334,7 +339,6 @@ WalletWrapper.prototype = {
         }
 
         var createdGameId = localStorage.getItem("createdGameId");
-        var ownGameLayout = "";
         var salt = "";
 
         if(createdGameId == gameId){
