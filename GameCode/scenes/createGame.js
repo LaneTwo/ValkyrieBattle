@@ -490,7 +490,10 @@ var SceneCreateGame = new Phaser.Class({
 
             //SELF.matchTimer.destroy();
             if(!SELF.acceptGameBtn){
-                SELF.notificationText = SELF.add.text(200, GRID_SIZE + GAME_BOARD_OFFSETY + 20, 'Do you want to accept user ' + game.playerAddress[1] + " challenge?", { font: '16px Courier', fill: '#ffffff' });
+                var player = SELF.matchGame? game.players[0] : game.players[1];
+
+
+                SELF.notificationText = SELF.add.text(150, GRID_SIZE + GAME_BOARD_OFFSETY + 20, '是否接受玩家 "' + (player || game.playerAddress[1]) + '" 的挑战？', { font: '16px Courier', fill: '#ffffff' });
                 SELF.acceptGameBtn = SELF.util.addButton('btnAccept', 200, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                     //scope.scene.start('createGame');
                     console.log('accept game');
@@ -578,7 +581,7 @@ var SceneCreateGame = new Phaser.Class({
     },
 
     onEvent: function () {
-        this.timerText.setText('倒计时: ' + this.timerTick);
+        this.timerText.setText('倒计时:' + this.timerTick);
     }
 
 });

@@ -34,7 +34,7 @@ ValkyrieBattleContract.prototype = {
         this.matches.set(this.matchCount, {
             gameId: this.matchCount,
             state: "WaitingForMatch", // WaitingForMatch, WaitingForAccept, GameInProgress, EndGameRequested, GameEnded
-            created: Blockchain.transaction.timestamp,
+            created: Blockchain.block.timestamp,
             playerGameHash: [gameHash.toLowerCase(),''],
             playerAddress: [Blockchain.transaction.from, ''],
             playerLayout:['',''],
@@ -78,7 +78,7 @@ ValkyrieBattleContract.prototype = {
         }
         game.playerGameHash[1] = gameHash.toLowerCase();
         game.playerAddress[1] = Blockchain.transaction.from;
-        game.attemptToMatchTimestamp = Blockchain.transaction.timestamp;
+        game.attemptToMatchTimestamp = Blockchain.block.timestamp;
         game.state = "WaitingForAccept";
 
         this.matches.set(gameId, game);
@@ -102,7 +102,7 @@ ValkyrieBattleContract.prototype = {
                 throw new Error("Can't accept expired game.");
             }
 
-            game.lastMoveTimestamp = Blockchain.transaction.timestamp;
+            game.lastMoveTimestamp = Blockchain.block.timestamp;
             game.state = "GameInProgress";
 
             this.matches.set(gameId, game);
@@ -134,7 +134,7 @@ ValkyrieBattleContract.prototype = {
                 state: -1
             });
 
-            game.lastMoveTimestamp = Blockchain.transaction.timestamp;
+            game.lastMoveTimestamp = Blockchain.block.timestamp;
             game.currentPlayer = 1 - game.currentPlayer;
 
             this.matches.set(gameId, game);
@@ -170,7 +170,7 @@ ValkyrieBattleContract.prototype = {
 
             attack.state = result;
 
-            game.lastMoveTimestamp = Blockchain.transaction.timestamp;
+            game.lastMoveTimestamp = Blockchain.block.timestamp;
             this.matches.set(gameId, game);
         }        
     },
@@ -193,7 +193,7 @@ ValkyrieBattleContract.prototype = {
         if(ownGameHash === game.playerGameHash[game.currentPlayer]){
             // TODO: Verify layout and every move
             game.state = "EndGameRequested";
-            game.lastMoveTimestamp = Blockchain.transaction.timestamp;
+            game.lastMoveTimestamp = Blockchain.block.timestamp;
             game.playerLayout[game.currentPlayer] = ownGameLayout;
             game.playerLayout[1 - game.currentPlayer] = enemyGameLayout;            
 
@@ -386,6 +386,7 @@ ValkyrieBattleContract.prototype = {
         if(!game){
             throw new Error("Invalid game ID.");
         }
+        game["players"] = [this.userNameMap.get(game.playerAddress[0]), this.userNameMap.get(game.playerAddress[1])];
 
         return game;
     },
