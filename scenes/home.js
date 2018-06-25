@@ -36,7 +36,9 @@ var SceneHome = new Phaser.Class({
         }, this, this);
         this.util.addButton('btnSetName', 512, 380, function(event, scope){ 
             var playerName = prompt("Please enter your name", "player");
-            SELF.wallet.setName(playerName);
+            if (playerName != null) {
+                SELF.wallet.setName(playerName);
+            }
         }, this, this);
         
     },
