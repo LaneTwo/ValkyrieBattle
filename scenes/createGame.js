@@ -570,6 +570,13 @@ var SceneCreateGame = new Phaser.Class({
             // }
             // SELF.notificationText.setText(notification);
             //TODO: 
+
+            if (SELF.playerIndex === game.winner) {
+                SELF.notificationText.setText('恭喜你赢了 :)');
+            } else {
+                SELF.notificationText.setText('别灰心, 下次一定可以赢 :)');
+            }
+
         }else{
             // Update timeout game result
             //var currentTime = Math.floor(Date.now() / 1000); 
