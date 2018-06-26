@@ -397,7 +397,7 @@ var SceneCreateGame = new Phaser.Class({
                         }else{
                             switch(game.winningReason){
                                 case 0:
-                                    notification = "很抱歉，您输掉了本局游戏！！！请返回主菜单继续对局";
+                                    notification = "别灰心, 下次一定可以赢！！！请返回主菜单继续对局";
                                     break;
                                 case 1:
                                     notification = "很抱歉，您超时输掉了本局游戏！！！请返回主菜单继续对局";
@@ -571,11 +571,11 @@ var SceneCreateGame = new Phaser.Class({
             // SELF.notificationText.setText(notification);
             //TODO: 
 
-            if (SELF.playerIndex === game.winner) {
-                SELF.notificationText.setText('恭喜你赢了 :)');
-            } else {
-                SELF.notificationText.setText('别灰心, 下次一定可以赢 :)');
-            }
+            // if (SELF.playerIndex === game.winner) {
+            //     SELF.notificationText.setText('恭喜你赢了 :)');
+            // } else {
+            //     SELF.notificationText.setText('别灰心, 下次一定可以赢 :)');
+            // }
 
         }else{
             // Update timeout game result
