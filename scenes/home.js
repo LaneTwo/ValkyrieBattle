@@ -20,6 +20,7 @@ var SceneHome = new Phaser.Class({
         this.load.image('btnLeaderboard', 'images/leaderboard.png');
         this.load.image('btnSetName', 'images/setname.png');
         this.load.image('btnMatch', 'images/match.png');
+        this.load.image('btnHelp', 'images/help.png');
     },
 
     create: function ()
@@ -39,6 +40,9 @@ var SceneHome = new Phaser.Class({
             if (playerName != null) {
                 SELF.wallet.setName(playerName);
             }
+        }, this, this);
+        this.util.addButton('btnHelp', 512, 440, function(event, scope){ 
+            scope.scene.start('help');
         }, this, this);
         
     },

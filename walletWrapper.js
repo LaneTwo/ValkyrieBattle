@@ -2,12 +2,12 @@
 WalletWrapper = function(){
     var NebPay = require("nebpay");
     // testnet
-    //this.contractAddress = "n1vFw4aCeGAjfsLVRygF2WV9b4UmzudcsZV";
-    //this.callbackUrl = NebPay.config.testnetUrl;
+    this.contractAddress = "n1t1uCt8LELRUMLhiKgkg3Nz6xTCdHmn56w";
+    this.callbackUrl = NebPay.config.testnetUrl;
 
     // mainnet
-    this.contractAddress = "n1yKAKoQwtBabzEf9X9fsBAGtb2c7Lb7N2S";
-    this.callbackUrl = NebPay.config.mainnetUrl;    
+    // this.contractAddress = "n1yKAKoQwtBabzEf9X9fsBAGtb2c7Lb7N2S";
+    // this.callbackUrl = NebPay.config.mainnetUrl;    
     
     this.nebPay = new NebPay();
     this.timer = null;

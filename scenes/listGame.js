@@ -27,20 +27,25 @@ var SceneListGame = new Phaser.Class({
         
         this.wallet.getUnmatchedGame(games =>{
             if(games.length == 0){
-                this.add.text(200, 300, 'There is no games openning for match, you can create one to wait for others.', { font: '18px Courier', fill: '#ffffff' });
+                this.add.text(100, 300, '这里空空如也，去创建一个游戏吧.', { font: '16px Courier', fill: '#ffffff' });
             }else{
+                this.add.text(200, 70, '玩家', { font: '16px Courier', fill: '#ffffff' });
+                this.add.text(600, 70, '创建时间', { font: '16px Courier', fill: '#ffffff' });
+
                 for(var i = 0; i < games.length; i++){
                     var player = games[i].players[0];
                     if(!player){
                         player = games[i].playerAddress[0];
                     }
                     var offsetY = 100 + i * 50;
-                    this.util.addButton('btnMatch', 150, offsetY, function(event, scope, gameId){ 
+                    this.util.addButton('btnMatch', 140, offsetY, function(event, scope, gameId){ 
                         console.log("To match game:" + gameId);
 
                         scope.scene.start('createGame', {matchGame: true, gameId: gameId});
                     }, this, this, games[i].gameId);
-                    this.add.text(200, offsetY, i + '. ' + player, { font: '16px Courier', fill: '#ffffff' });
+                    this.add.text(200, offsetY, player, { font: '16px Courier', fill: '#ffffff' });
+                    var createDate = new Date(games[i].created * 1000);
+                    this.add.text(600, offsetY, createDate.toLocaleString(), { font: '16px Courier', fill: '#ffffff' });
 
                 }
             }
