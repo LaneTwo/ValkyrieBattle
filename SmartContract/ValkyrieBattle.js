@@ -635,9 +635,20 @@ ValkyrieBattleContract.prototype = {
         //TODO: anti-cheating verify
         var creatorGame = new Game();
         creatorGame.init();
-        if(!(creatorGame.addPlane(creatorGameLayout[0]) &&
-            creatorGame.addPlane(creatorGameLayout[1]) &&
-            creatorGame.addPlane(creatorGameLayout[2]))){
+        var isCheating = false;
+        if(creatorGameLayout.length !== 3){
+            isCheating = true;
+        }else{
+            for(var i = 0; i < creatorGameLayout.length; i++){
+                var plane = new Plane(creatorGameLayout[i].point, challengerGameLayout[i].orientation);
+                if(!creatorGame.addPlane(plane)){
+                    isCheating = true;
+                    break;
+                }
+            }
+        }
+
+        if(isCheating){
             // plane layout invalid
             result.winner = 1;
             result.reason = 2;
@@ -646,9 +657,20 @@ ValkyrieBattleContract.prototype = {
 
         var challengerGame = new Game();
         challengerGame.init();
-        if(!(challengerGame.addPlane(challengerGameLayout[0]) &&
-            challengerGame.addPlane(challengerGameLayout[1]) &&
-            challengerGame.addPlane(challengerGameLayout[2]))){
+        isCheating = false;
+        if(challengerGameLayout.length !== 3){
+            isCheating = true;
+        }else{
+            for(var i = 0; i < challengerGameLayout.length; i++){
+                var plane = new Plane(challengerGameLayout[i].point, challengerGameLayout[i].orientation);
+                if(!challengerGame.addPlane(plane)){
+                    isCheating = true;
+                    break;
+                }
+            }
+        } 
+
+        if(isCheating){
             // plane layout invalid
             result.winner = 0;
             result.reason = 2;

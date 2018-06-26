@@ -312,6 +312,7 @@ var SceneCreateGame = new Phaser.Class({
                                     if(SELF.acceptGameBtn){
                                         SELF.acceptGameBtn.visible = false;
                                         SELF.denyGameBtn.visible = false;
+                                        SELF.notificationText.setText('');
                                     }
                                 }else{
                                     SELF.notificationText.setText('对方没有应答，请返回游戏列表挑战其他玩家');
