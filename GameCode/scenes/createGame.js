@@ -97,14 +97,18 @@ var SceneCreateGame = new Phaser.Class({
         this.enemyPlanes[2].visible = false;
 
         if(SELF.matchGame){
-            SELF.matchGameBtn = this.util.addButton('btnMatchGamge', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
-                //scope.scene.start('createGame');
-                console.log('match game');
-                SELF.matchGameBtn.destroy();
-                
-                SELF.wallet.matchGame(SELF.matchGameId, SELF.orderPlanes(SELF.createdGame.planes), "1");
-                SELF.monitorGameStateChange();
-            }, this, this);
+            if(!SELF.matchGameBtn){
+                SELF.matchGameBtn = this.util.addButton('btnMatchGamge', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
+                    //scope.scene.start('createGame');
+                    console.log('match game');
+                    SELF.matchGameBtn.visible = false;
+                    SELF.gameState = "WaitingForMatch";
+                    SELF.wallet.matchGame(SELF.matchGameId, SELF.orderPlanes(SELF.createdGame.planes), "1");
+                    SELF.monitorGameStateChange();
+                }, this, this);
+            }else{
+                SELF.matchGameBtn.visible = true;
+            }
 
             //Initialize plane position
             this.planes[0].plane.point = {x: 2, y:0};
@@ -117,17 +121,23 @@ var SceneCreateGame = new Phaser.Class({
         }else{
             var previousCreatedGame = SELF.wallet.loadCreatedGame();
             if(previousCreatedGame.gameId < 0){
-                SELF.createGameBtn = this.util.addButton('btnCreateGamge', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
-                    //scope.scene.start('createGame');
-                    console.log('create game');
-                    SELF.createGameBtn.destroy();
-                    
-                    SELF.wallet.createNewGame(SELF.orderPlanes(SELF.createdGame.planes), "1", function(gameId){
-                        SELF.createdGameId = gameId;
-                        SELF.gameState = "WaitingForMatch";
-                        SELF.monitorGameStateChange();
-                    });
-                }, this, this);
+                if(!SELF.createGameBtn){
+                    SELF.createGameBtn = this.util.addButton('btnCreateGamge', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
+                        //scope.scene.start('createGame');
+                        console.log('create game');
+                        SELF.createGameBtn.visible = false;
+                        
+                        SELF.wallet.createNewGame(SELF.orderPlanes(SELF.createdGame.planes), "1", function(gameId){
+                            SELF.createdGameId = gameId;
+                            SELF.gameState = "WaitingForMatch";
+                            SELF.updatePlaneDraggable();
+                            SELF.monitorGameStateChange();
+                        });
+                    }, this, this);
+                }else{
+                    SELF.createGameBtn.visible = true;
+                }
+
     
                 //Initialize plane position
                 this.planes[0].plane.point = {x: 2, y:0};
@@ -140,6 +150,7 @@ var SceneCreateGame = new Phaser.Class({
                 this.planes[2].plane = previousCreatedGame.planeLayout[2];
 
                 SELF.createdGameId = previousCreatedGame.gameId;
+                SELF.gameState = "WaitingForMatch";
                 SELF.monitorGameStateChange();
 
             }
@@ -165,7 +176,7 @@ var SceneCreateGame = new Phaser.Class({
 
         this.updateGame(SELF.enemyGame, SELF.enemyPlanes);
 
-        this.updatePlanDraggable();
+        this.updatePlaneDraggable();
         this.util.addButton('btnMainmenu', 80, 30, function(event, scope){ 
             scope.scene.start('home');
         }, this, this);
@@ -249,9 +260,9 @@ var SceneCreateGame = new Phaser.Class({
         });
     },
 
-    updatePlanDraggable(){
+    updatePlaneDraggable(){
         for(var i = 0; i < this.planes.length; i++){
-            this.planes[i].input.draggable = !this.requestingEndGame;
+            this.planes[i].input.draggable = this.gameState === "InitPlaneLayout";
         } 
 
         for(var i = 0; i < this.enemyPlanes.length; i++){
@@ -262,18 +273,20 @@ var SceneCreateGame = new Phaser.Class({
     monitorGameStateChange: function(){
         var SELF = this;
 
-        for(var i = 0; i < this.planes.length; i++){
-            this.planes[i].input.draggable = false;
-        } 
+        // for(var i = 0; i < this.planes.length; i++){
+        //     this.planes[i].input.draggable = false;
+        // } 
 
         SELF.matchTimer = this.time.addEvent(
         { 
             delay: 3000,
             loop:true, 
             callback: function(){
+                SELF.updatePlaneDraggable();
                 var gameId = SELF.matchGame? SELF.matchGameId : SELF.createdGameId;
                 SELF.wallet.getGame(gameId, game =>{
                     if(game.state === "WaitingForMatch"){
+                        SELF.gameState = game.state;
                         if(!SELF.notificationText){
                             SELF.notificationText = SELF.add.text(150, GRID_SIZE + GAME_BOARD_OFFSETY + 20, '', { font: '16px Courier', fill: '#ffffff' });
                         }
@@ -286,11 +299,23 @@ var SceneCreateGame = new Phaser.Class({
                         }
                         SELF.timerTick = timerTick;
 
-                        if(SELF.gameState !== "WaitingForConfirm" &&
-                            InternetStandardTime < (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
-                            SELF.gameState = game.state;
-                            if(!SELF.matchGame){
-                                SELF.waitingForMatch(game);
+                        if(SELF.gameState !== "WaitingForConfirm"){
+                            if(InternetStandardTime < (game.attemptToMatchTimestamp + ACTION_EXPIRE_TIMEOUT)){
+                                SELF.gameState = game.state;
+                                if(!SELF.matchGame){
+                                    SELF.waitingForMatch(game);
+                                }else{
+                                    SELF.notificationText.setText('请耐心等待对方应战 :)');
+                                }
+                            }else{
+                                if(!SELF.matchGame){
+                                    if(SELF.acceptGameBtn){
+                                        SELF.acceptGameBtn.visible = false;
+                                        SELF.denyGameBtn.visible = false;
+                                    }
+                                }else{
+                                    SELF.notificationText.setText('对方没有应答，请返回游戏列表挑战其他玩家');
+                                }
                             }
                         }
                         SELF.boardMask.visible = true;
@@ -303,6 +328,7 @@ var SceneCreateGame = new Phaser.Class({
 
                         SELF.processOngoingGame(gameId, game);
                     }else if(game.state === "EndGameRequested"){
+                        SELF.requestingEndGame = false;
                         var timerTick = ACTION_EXPIRE_TIMEOUT + game.lastMoveTimestamp - InternetStandardTime;
                         if(timerTick <= 0){
                             timerTick = 0;                            
@@ -338,6 +364,7 @@ var SceneCreateGame = new Phaser.Class({
                             }
                         }   
                     }else if(game.state === "GameEnded"){
+                        SELF.requestingEndGame = false;
                         SELF.boardMask.visible = true;
                         console.log("Game end");
                         SELF.gameState = game.state;
@@ -354,7 +381,33 @@ var SceneCreateGame = new Phaser.Class({
 
                         SELF.matchTimer.destroy();
 
-                        // TODO: show victory or loss message
+                        var notification = '';
+                        if(game.winner === SELF.playerIndex){
+                            switch(game.winningReason){
+                                case 0:
+                                    notification = "恭喜您获胜！！！请返回主菜单继续对局";
+                                    break;
+                                case 1:
+                                    notification = "对方超时，恭喜您获胜！！！请返回主菜单继续对局";
+                                    break;
+                                case 2:
+                                    notification = "对方作弊，恭喜您获胜！！！请返回主菜单继续对局";
+                                    break;                                                
+                            }
+                        }else{
+                            switch(game.winningReason){
+                                case 0:
+                                    notification = "很抱歉，您输掉了本局游戏！！！请返回主菜单继续对局";
+                                    break;
+                                case 1:
+                                    notification = "很抱歉，您超时输掉了本局游戏！！！请返回主菜单继续对局";
+                                    break;
+                                case 2:
+                                    notification = "作弊可耻，您输掉了本局游戏！！！请返回主菜单继续对局";
+                                    break;                                                
+                            }                
+                        }
+                        SELF.notificationText.setText(notification);
                     }
                 })
             }, 
@@ -395,7 +448,7 @@ var SceneCreateGame = new Phaser.Class({
         
                             console.log('End game');
                             SELF.requestingEndGame = true;
-                            SELF.updatePlanDraggable();
+                            SELF.updatePlaneDraggable();
                             
                             var enemyPlaneLayout = SELF.enemyGame.planes;
                             console.log("================> enemy layout");
@@ -416,7 +469,7 @@ var SceneCreateGame = new Phaser.Class({
         
                             console.log('End game');
                             SELF.requestingEndGame = false;
-                            SELF.updatePlanDraggable();
+                            SELF.updatePlaneDraggable();
         
                         }, SELF, SELF);
                     }else{
@@ -424,11 +477,9 @@ var SceneCreateGame = new Phaser.Class({
                     }
 
                     SELF.requestingEndGame = true;
-                    SELF.updatePlanDraggable();
+                    SELF.updatePlaneDraggable();
 
                 }, SELF, SELF);
-            }else{
-                SELF.requestEndGameBtn.visible = !SELF.requestingEndGame;
             }
 
             if(InternetStandardTime > (game.lastMoveTimestamp + ACTION_EXPIRE_TIMEOUT)){                
@@ -441,6 +492,19 @@ var SceneCreateGame = new Phaser.Class({
             }
 
             SELF.boardMask.visible = SELF.playerIndex !== game.currentPlayer;
+            var shouldDisplayRequestingEndBtn = false;
+            if(SELF.playerIndex === game.currentPlayer){
+                if(!SELF.requestingEndGame){
+                    if(!SELF.endGameBtn || !SELF.endGameBtn.visible){
+                        shouldDisplayRequestingEndBtn = true;
+                    }
+                }
+            }
+            SELF.requestEndGameBtn.visible = shouldDisplayRequestingEndBtn;            
+
+            //SELF.requestEndGameBtn.visible = SELF.playerIndex === game.currentPlayer;
+            var notification = SELF.playerIndex === game.currentPlayer? "轮到您了，请点击敌方棋盘进行攻击" : "轮到对方了，请耐心等待";
+            SELF.notificationText.setText(notification);
             if(game.attacks.length > SELF.playStep ){
                 // new step, need to update attack result onchain
                 SELF.playStep = game.attacks.length;
@@ -477,8 +541,34 @@ var SceneCreateGame = new Phaser.Class({
                 }                              
             }                            
         }else if(game.state === "GameEnded"){
-            SELF.matchTimer.destroy();
-
+            // SELF.matchTimer.destroy();
+            // var notification = '';
+            // if(game.winner === SELF.playerIndex){
+            //     switch(game.winningReason){
+            //         case 0:
+            //             notification = "恭喜您获胜！！！请返回主菜单继续对局";
+            //             break;
+            //         case 1:
+            //             notification = "对方超时，恭喜您获胜！！！请返回主菜单继续对局";
+            //             break;
+            //         case 2:
+            //             notification = "对方作弊，恭喜您获胜！！！请返回主菜单继续对局";
+            //             break;                                                
+            //     }
+            // }else{
+            //     switch(game.winningReason){
+            //         case 0:
+            //             notification = "很抱歉，您输掉了本局游戏！！！请返回主菜单继续对局";
+            //             break;
+            //         case 1:
+            //             notification = "很抱歉，您超时输掉了本局游戏！！！请返回主菜单继续对局";
+            //             break;
+            //         case 2:
+            //             notification = "作弊可耻，您输掉了本局游戏！！！请返回主菜单继续对局";
+            //             break;                                                
+            //     }                
+            // }
+            // SELF.notificationText.setText(notification);
             //TODO: 
         }else{
             // Update timeout game result
