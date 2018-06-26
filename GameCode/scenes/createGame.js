@@ -339,6 +339,7 @@ var SceneCreateGame = new Phaser.Class({
                         }   
                     }else if(game.state === "GameEnded"){
                         SELF.boardMask.visible = true;
+                        SELF.endGameBtn.visible = false;
                         console.log("Game end");
                         SELF.gameState = game.state;
 
