@@ -22,7 +22,7 @@ var SceneHelp = new Phaser.Class({
         }, this, this);
 
 
-        this.add.text(100, 100, '中学时代课堂上的打飞机游戏，利用星云区块链智能合约实现游戏撮合及反作弊功能，快和小伙伴重温一下吧。', { font: '16px Simsun', fill: '#ffffff' });
+        this.add.text(100, 100, '中学时代课堂上的双人对战打飞机游戏，利用星云区块链智能合约实现游戏撮合及反作弊功能，快和小伙伴重温一下吧。', { font: '16px Simsun', fill: '#ffffff' });
 
         var helpText = [
             '游戏规则：',
