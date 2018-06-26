@@ -19,7 +19,6 @@ var SceneHome = new Phaser.Class({
         this.load.image('btnMatchGamge', 'images/matchGame.png');
         this.load.image('btnLeaderboard', 'images/leaderboard.png');
         this.load.image('btnSetName', 'images/setname.png');
-        this.load.image('btnMatch', 'images/match.png');
         this.load.image('btnHelp', 'images/help.png');
     },
 
