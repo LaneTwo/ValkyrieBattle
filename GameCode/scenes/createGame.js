@@ -273,7 +273,13 @@ var SceneCreateGame = new Phaser.Class({
             callback: function(){
                 var gameId = SELF.matchGame? SELF.matchGameId : SELF.createdGameId;
                 SELF.wallet.getGame(gameId, game =>{
-                    if(game.state === "WaitingForAccept"){
+                    if(game.state === "WaitingForMatch"){
+                        if(!SELF.notificationText){
+                            SELF.notificationText = SELF.add.text(150, GRID_SIZE + GAME_BOARD_OFFSETY + 20, '', { font: '16px Courier', fill: '#ffffff' });
+                        }
+                        SELF.notificationText.setText('请耐心等待其他玩家应战 :)');
+                         
+                    }else if(game.state === "WaitingForAccept"){
                         var timerTick = ACTION_EXPIRE_TIMEOUT + game.attemptToMatchTimestamp - InternetStandardTime;
                         if(timerTick <= 0){
                             timerTick = 0;
@@ -496,8 +502,11 @@ var SceneCreateGame = new Phaser.Class({
             if(!SELF.acceptGameBtn){
                 var player = SELF.matchGame? game.players[0] : game.players[1];
 
-
-                SELF.notificationText = SELF.add.text(150, GRID_SIZE + GAME_BOARD_OFFSETY + 20, '是否接受玩家 "' + (player || game.playerAddress[1]) + '" 的挑战？', { font: '16px Courier', fill: '#ffffff' });
+                if(!SELF.notificationText){
+                    SELF.notificationText = SELF.add.text(150, GRID_SIZE + GAME_BOARD_OFFSETY + 20, '', { font: '16px Courier', fill: '#ffffff' });
+                }
+                SELF.notificationText.setText('是否接受玩家 "' + (player || game.playerAddress[1]) + '" 的挑战？');
+                                
                 SELF.acceptGameBtn = SELF.util.addButton('btnAccept', 200, ACTION_BUTTON_OFFSETY, function(event, scope){ 
                     //scope.scene.start('createGame');
                     console.log('accept game');
