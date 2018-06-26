@@ -14,7 +14,7 @@ var SceneListGame = new Phaser.Class({
 
     preload: function ()
     {
-        this.load.image('btnMatch', 'images/match.png');
+        this.load.image('btnMatch', 'images/matchplayer.png');
         this.load.image('btnMainmenu', 'images/mainmenu.png');
     },
     create: function ()
