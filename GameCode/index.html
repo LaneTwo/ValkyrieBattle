@@ -32,6 +32,9 @@
         
         var InternetStandardTime = 0;
 
+        var wallet = new WalletWrapper();
+
+
 
 
         function convertUnixTimeCallback(result){
@@ -42,8 +45,12 @@
 
         function getStarndardTime()
         {
-            $.getScript( "http://www.convert-unix-time.com/api?timestamp=now&returnType=jsonp&callback=convertUnixTimeCallback");
-            var t=setTimeout(getStarndardTime, 1000)
+            //$.getScript( "http://www.convert-unix-time.com/api?timestamp=now&returnType=jsonp&callback=convertUnixTimeCallback");
+            
+            wallet.getServerTime(function(time){
+                InternetStandardTime = time;
+            })
+            var t=setTimeout(getStarndardTime, 3000)
         }
 
         getStarndardTime();

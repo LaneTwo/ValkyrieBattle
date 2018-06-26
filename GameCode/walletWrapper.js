@@ -2,12 +2,12 @@
 WalletWrapper = function(){
     var NebPay = require("nebpay");
     // testnet
-    this.contractAddress = "n1qxGxE5hqhDaSkqcjoRJGjRgB5r2dtaTg4";
-    this.callbackUrl = NebPay.config.testnetUrl;
+    // this.contractAddress = "n1j1dNfJfr5JpChRyiJ3HXpCVts95uHrqSp";
+    // this.callbackUrl = NebPay.config.testnetUrl;
 
     // mainnet
-    // this.contractAddress = "n1yKAKoQwtBabzEf9X9fsBAGtb2c7Lb7N2S";
-    // this.callbackUrl = NebPay.config.mainnetUrl;    
+    this.contractAddress = "n1uKXu6zVoyMxTjzk5nYjaVwvaixSrJvDCE";
+    this.callbackUrl = NebPay.config.mainnetUrl;    
     
     this.nebPay = new NebPay();
     this.timer = null;
@@ -125,6 +125,24 @@ WalletWrapper.prototype = {
         }
     
         var callFunction = "getUserCurrentOpenGame";
+        var callArgs = "";
+    
+        this.nebPay.simulateCall(this.contractAddress, 0, callFunction, callArgs, {
+            qrcode: {
+                showQRCode: false
+            },
+            callback: this.callbackUrl,
+            listener: listener  //set listener for extension transaction result
+        });        
+    },
+    getServerTime: function(callback){
+        var listener = function(resp) {
+          //console.log("getGame listener resp: " + JSON.stringify(resp));
+          console.log("server time resp: " + resp.result);
+          callback(JSON.parse(resp.result));
+        }
+    
+        var callFunction = "getServerTime";
         var callArgs = "";
     
         this.nebPay.simulateCall(this.contractAddress, 0, callFunction, callArgs, {

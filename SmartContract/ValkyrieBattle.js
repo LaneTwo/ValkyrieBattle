@@ -625,6 +625,10 @@ ValkyrieBattleContract.prototype = {
         return leaderboardArray;
     },
 
+    getServerTime: function(){
+        return Date.now() / 1000;
+    },
+
     // Internal function
     _verifyGameLayoutAndGetWinner:function(gameId, creatorGameLayout, challengerGameLayout){
         var game = this.matches.get(gameId);
