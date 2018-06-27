@@ -36,18 +36,11 @@ var SceneCreateGame = new Phaser.Class({
     },
 
     init: function(param){
-
-        if(param.matchGame){
-            this.matchGame = true;
-            this.matchGameId = param.gameId;
-        }else{
-            this.matchGame = false;
-        }
-
         if(!this.isFirstCreated){
             this.createdGame.init();
             this.enemyGame.init();
-    
+            this.matchGame = false;
+            this.matchGameId = -1; 
             this.gameState = "InitPlaneLayout";
             this.playStep = 0;
             this.playerIndex = 0;
@@ -62,8 +55,14 @@ var SceneCreateGame = new Phaser.Class({
             this.requestEndGameBtn = null;
             this.endGameBtn = null;
             this.cancelBtn = null;
-        }        
+        }
 
+        if(param.matchGame){
+            this.matchGame = true;
+            this.matchGameId = param.gameId;
+        }else{
+            this.matchGame = false;
+        }
     },
 
     preload: function() {
