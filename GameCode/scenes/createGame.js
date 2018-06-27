@@ -56,7 +56,7 @@ var SceneCreateGame = new Phaser.Class({
             this.endGameBtn = null;
             this.cancelBtn = null;
 
-            this.notificationText = SELF.add.text(150, GRID_SIZE + GAME_BOARD_OFFSETY + 20, '', { font: '16px Courier', fill: '#ffffff' });
+            this.notificationText = this.add.text(150, GRID_SIZE + GAME_BOARD_OFFSETY + 20, '', { font: '16px Courier', fill: '#ffffff' });
 
         }
 
