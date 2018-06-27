@@ -30,15 +30,40 @@ var SceneCreateGame = new Phaser.Class({
         this.playerIndex = 0;
         this.attackStateUpdated = false;
         this.timerTick = 0;
+        this.requestingEndGame = false;
+
+        this.isFirstCreated = true;
     },
 
     init: function(param){
+
         if(param.matchGame){
             this.matchGame = true;
             this.matchGameId = param.gameId;
         }else{
             this.matchGame = false;
         }
+
+        if(!this.isFirstCreated){
+            this.createdGame.init();
+            this.enemyGame.init();
+    
+            this.gameState = "InitPlaneLayout";
+            this.playStep = 0;
+            this.playerIndex = 0;
+            this.attackStateUpdated = false;
+            this.timerTick = 0;
+            this.notificationText = "";
+            this.requestingEndGame = false;
+            this.createGameBtn = null;
+            this.matchGameBtn = null;
+            this.acceptGameBtn = null;
+            this.denyGameBtn = null;
+            this.requestEndGameBtn = null;
+            this.endGameBtn = null;
+            this.cancelBtn = null;
+        }        
+
     },
 
     preload: function() {
@@ -58,6 +83,7 @@ var SceneCreateGame = new Phaser.Class({
     create: function() {
         var SELF = this;
 
+        this.isFirstCreated = false;
         this.add.text(250, 25, '自己飞机', { font: '16px Courier', fill: '#ffffff' });
         this.add.text(700, 25, '敌人飞机', { font: '16px Courier', fill: '#ffffff' });
 
@@ -95,76 +121,12 @@ var SceneCreateGame = new Phaser.Class({
         this.enemyPlanes[0].visible = false;
         this.enemyPlanes[1].visible = false;
         this.enemyPlanes[2].visible = false;
-
-        if(SELF.matchGame){
-            if(!SELF.matchGameBtn){
-                SELF.matchGameBtn = this.util.addButton('btnMatchGamge', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
-                    //scope.scene.start('createGame');
-                    console.log('match game');
-                    SELF.matchGameBtn.visible = false;
-                    SELF.gameState = "WaitingForMatch";
-                    SELF.wallet.matchGame(SELF.matchGameId, SELF.orderPlanes(SELF.createdGame.planes), "1");
-                    SELF.monitorGameStateChange();
-                }, this, this);
-            }else{
-                SELF.matchGameBtn.visible = true;
-            }
-
-            //Initialize plane position
-            this.planes[0].plane.point = {x: 2, y:0};
-            this.planes[1].plane.point = {x: 7, y:0};
-            this.planes[2].plane.point = {x: 2, y:9};
-            this.planes[2].plane.orientation = PlaneOrientation.Bottom;
-
-
-            //this.sys.game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, function(){console.log("timer repeat")}, this);
-        }else{
-            var previousCreatedGame = SELF.wallet.loadCreatedGame();
-            if(previousCreatedGame.gameId < 0){
-                if(!SELF.createGameBtn){
-                    SELF.createGameBtn = this.util.addButton('btnCreateGamge', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
-                        //scope.scene.start('createGame');
-                        console.log('create game');
-                        SELF.createGameBtn.visible = false;
-                        
-                        SELF.wallet.createNewGame(SELF.orderPlanes(SELF.createdGame.planes), "1", function(gameId){
-                            SELF.createdGameId = gameId;
-                            SELF.gameState = "WaitingForMatch";
-                            SELF.updatePlaneDraggable();
-                            SELF.monitorGameStateChange();
-                        });
-                    }, this, this);
-                }else{
-                    SELF.createGameBtn.visible = true;
-                }
-
-    
-                //Initialize plane position
-                this.planes[0].plane.point = {x: 2, y:0};
-                this.planes[1].plane.point = {x: 7, y:0};
-                this.planes[2].plane.point = {x: 2, y:9};
-                this.planes[2].plane.orientation = PlaneOrientation.Bottom;
-            }else{
-                this.planes[0].plane = previousCreatedGame.planeLayout[0];
-                this.planes[1].plane = previousCreatedGame.planeLayout[1];
-                this.planes[2].plane = previousCreatedGame.planeLayout[2];
-
-                SELF.createdGameId = previousCreatedGame.gameId;
-                SELF.gameState = "WaitingForMatch";
-                SELF.monitorGameStateChange();
-
-            }
-        }
-
-        SELF.timedEvent = SELF.time.addEvent({ delay: 1000, callback: SELF.onEvent, callbackScope: SELF, loop: true });
         this.children.add(this.planes[0]);
         this.children.add(this.planes[1]);
         this.children.add(this.planes[2]);
         this.children.add(this.enemyPlanes[0]);
         this.children.add(this.enemyPlanes[1]);
         this.children.add(this.enemyPlanes[2]);
-
-        this.updateGame(SELF.createdGame, SELF.planes);
 
         this.input.setDraggable(this.planes[0]);
         this.input.setDraggable(this.planes[1]);
@@ -174,9 +136,13 @@ var SceneCreateGame = new Phaser.Class({
         this.input.setDraggable(this.enemyPlanes[1]);
         this.input.setDraggable(this.enemyPlanes[2]);
 
-        this.updateGame(SELF.enemyGame, SELF.enemyPlanes);
 
-        this.updatePlaneDraggable();
+        this.initPlanes();
+
+        SELF.timedEvent = SELF.time.addEvent({ delay: 1000, callback: SELF.onEvent, callbackScope: SELF, loop: true });
+
+
+
         this.util.addButton('btnMainmenu', 80, 30, function(event, scope){ 
             scope.scene.start('home');
         }, this, this);
@@ -252,6 +218,74 @@ var SceneCreateGame = new Phaser.Class({
                 SELF.selectedPlane.setNextDirection();
             }
         });
+    },
+
+    initPlanes(){
+        var SELF = this;
+        if(SELF.matchGame){
+            if(!SELF.matchGameBtn){
+                SELF.matchGameBtn = this.util.addButton('btnMatchGamge', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
+                    //scope.scene.start('createGame');
+                    console.log('match game');
+                    SELF.matchGameBtn.visible = false;
+                    SELF.gameState = "WaitingForMatch";
+                    SELF.wallet.matchGame(SELF.matchGameId, SELF.orderPlanes(SELF.createdGame.planes), "1");
+                    SELF.monitorGameStateChange();
+                }, this, this);
+            }else{
+                SELF.matchGameBtn.visible = true;
+            }
+
+            //Initialize plane position
+            SELF.planes[0].plane.point = {x: 2, y:0};
+            SELF.planes[1].plane.point = {x: 7, y:0};
+            SELF.planes[2].plane.point = {x: 2, y:9};
+            SELF.planes[2].plane.orientation = PlaneOrientation.Bottom;
+
+
+            //this.sys.game.time.events.repeat(Phaser.Timer.SECOND * 5, 10, function(){console.log("timer repeat")}, this);
+        }else{
+            var previousCreatedGame = SELF.wallet.loadCreatedGame();
+            if(previousCreatedGame.gameId < 0){
+                if(!SELF.createGameBtn){
+                    SELF.createGameBtn = this.util.addButton('btnCreateGamge', 300, ACTION_BUTTON_OFFSETY, function(event, scope){ 
+                        //scope.scene.start('createGame');
+                        console.log('create game');
+                        SELF.createGameBtn.visible = false;
+                        
+                        SELF.wallet.createNewGame(SELF.orderPlanes(SELF.createdGame.planes), "1", function(gameId){
+                            SELF.createdGameId = gameId;
+                            SELF.gameState = "WaitingForMatch";
+                            SELF.updatePlaneDraggable();
+                            SELF.monitorGameStateChange();
+                        });
+                    }, this, this);
+                }else{
+                    SELF.createGameBtn.visible = true;
+                }
+
+    
+                //Initialize plane position
+                SELF.planes[0].plane.point = {x: 2, y:0};
+                SELF.planes[1].plane.point = {x: 7, y:0};
+                SELF.planes[2].plane.point = {x: 2, y:9};
+                SELF.planes[2].plane.orientation = PlaneOrientation.Bottom;
+            }else{
+                SELF.planes[0].plane = previousCreatedGame.planeLayout[0];
+                SELF.planes[1].plane = previousCreatedGame.planeLayout[1];
+                SELF.planes[2].plane = previousCreatedGame.planeLayout[2];
+
+                SELF.createdGameId = previousCreatedGame.gameId;
+                SELF.gameState = "WaitingForMatch";
+                SELF.monitorGameStateChange();
+
+            }
+        }
+
+        SELF.updateGame(SELF.createdGame, SELF.planes);
+        SELF.updateGame(SELF.enemyGame, SELF.enemyPlanes);
+
+        SELF.updatePlaneDraggable();
     },
 
     orderPlanes(planes){
