@@ -30,8 +30,8 @@ var SceneLeaderboard = new Phaser.Class({
                 var offsetY = 50;
                 this.add.text(200, offsetY, '排名', { font: '16px Courier', fill: '#ffffff' });
                 this.add.text(250, offsetY, '玩家', { font: '16px Courier', fill: '#ffffff' });
-                this.add.text(650, offsetY, '输', { font: '16px Courier', fill: '#ffffff' });
-                this.add.text(700, offsetY, '赢', { font: '16px Courier', fill: '#ffffff' });
+                this.add.text(650, offsetY, '赢', { font: '16px Courier', fill: '#ffffff' });
+                this.add.text(700, offsetY, '输', { font: '16px Courier', fill: '#ffffff' });
                 for(var i = 0; i < results.length; i++){
                     var result = results[i];                    
                     offsetY = 100 + i * 30;
