@@ -46,7 +46,7 @@ var SceneCreateGame = new Phaser.Class({
             this.playerIndex = 0;
             this.attackStateUpdated = false;
             this.timerTick = 0;
-            this.notificationText = "";
+            this.notificationText = null;
             this.requestingEndGame = false;
             this.createGameBtn = null;
             this.matchGameBtn = null;
@@ -55,6 +55,9 @@ var SceneCreateGame = new Phaser.Class({
             this.requestEndGameBtn = null;
             this.endGameBtn = null;
             this.cancelBtn = null;
+
+            this.notificationText = SELF.add.text(150, GRID_SIZE + GAME_BOARD_OFFSETY + 20, '', { font: '16px Courier', fill: '#ffffff' });
+
         }
 
         if(param.matchGame){
