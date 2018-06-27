@@ -36,7 +36,7 @@ var SceneLeaderboard = new Phaser.Class({
                     var result = results[i];                    
                     offsetY = 100 + i * 30;
 
-                    this.add.text(200, offsetY, i + '. ', { font: '16px Courier', fill: '#ffffff' });
+                    this.add.text(200, offsetY, (i + 1) + '. ', { font: '16px Courier', fill: '#ffffff' });
                     this.add.text(250, offsetY, result.name, { font: '16px Courier', fill: '#ffffff' });
                     this.add.text(650, offsetY, result.win, { font: '16px Courier', fill: '#ffffff' });
                     this.add.text(700, offsetY, result.loss, { font: '16px Courier', fill: '#ffffff' });
