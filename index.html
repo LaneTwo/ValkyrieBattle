@@ -31,10 +31,21 @@
         }; 
         
         var InternetStandardTime = 0;
+        var CurrentUserAddress = '';
+        var GameVersion = '0.1';
 
         var wallet = new WalletWrapper();
 
+        if(localStorage.getItem("GameVersion") !== GameVersion){
+            localStorage.setItem("GameVersion", GameVersion);
+            localStorage.setItem("challengeGameId", "");
+            localStorage.setItem("challengeGameLayout", "");
+            localStorage.setItem("challengeGameSalt", "");
 
+            localStorage.setItem("createdGameId", "");
+            localStorage.setItem("createdGameLayout", "");
+            localStorage.setItem("createdGameSalt", "");
+        }
 
 
         function convertUnixTimeCallback(result){
@@ -57,6 +68,28 @@
 
         var game = new Phaser.Game(config);
         console.log(game);
+
+        setTimeout(function () {
+            if (!window.webExtensionWallet) {
+                alert("请先安装星云钱包插件.");
+            } else {
+
+                window.addEventListener('message', function (e) {
+                    if (e.data && e.data.data) {
+                        if (e.data.data.account) {
+                            CurrentUserAddress = e.data.data.account;
+                            console.log("-------------->");
+                            console.log(CurrentUserAddress);
+                        }
+                    }
+                });
+                window.postMessage({
+                    "target": "contentscript",
+                    "data": {},
+                    "method": "getAccount",
+                }, "*");
+            }
+        }, 2000); 
 
     </script>
 
