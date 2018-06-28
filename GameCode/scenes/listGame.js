@@ -38,11 +38,13 @@ var SceneListGame = new Phaser.Class({
                         player = games[i].playerAddress[0];
                     }
                     var offsetY = 100 + i * 50;
-                    this.util.addButton('btnMatch', 140, offsetY, function(event, scope, gameId){ 
-                        console.log("To match game:" + gameId);
-
-                        scope.scene.start('createGame', {matchGame: true, gameId: gameId});
-                    }, this, this, games[i].gameId);
+                    if(games[i].playerAddress[0] !== CurrentUserAddress){
+                        this.util.addButton('btnMatch', 140, offsetY, function(event, scope, gameId){ 
+                            console.log("To match game:" + gameId);
+    
+                            scope.scene.start('createGame', {matchGame: true, gameId: gameId});
+                        }, this, this, games[i].gameId);
+                    }                    
                     this.add.text(200, offsetY, player, { font: '16px Courier', fill: '#ffffff' });
                     var createDate = new Date(games[i].created * 1000);
                     this.add.text(600, offsetY, createDate.toLocaleString(), { font: '16px Courier', fill: '#ffffff' });
