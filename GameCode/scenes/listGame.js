@@ -15,6 +15,7 @@ var SceneListGame = new Phaser.Class({
     preload: function ()
     {
         this.load.image('btnMatch', 'images/matchplayer.png');
+        this.load.image('btnCancel', 'images/cancelmygame.png');
         this.load.image('btnMainmenu', 'images/mainmenu.png');
     },
     create: function ()
@@ -44,7 +45,15 @@ var SceneListGame = new Phaser.Class({
     
                             scope.scene.start('createGame', {matchGame: true, gameId: gameId});
                         }, this, this, games[i].gameId);
-                    }                    
+                    }else{
+                        SELF.cancelBtn = this.util.addButton('btnCancel', 140, offsetY, function(event, scope, gameId){ 
+                            console.log("To cancel game:" + gameId);
+                            SELF.cancelBtn.destroy();
+                            SELF.cancelBtn = null;
+    
+                            SELF.wallet.cancelGame(gameId);
+                        }, this, this, games[i].gameId);                        
+                    }
                     this.add.text(200, offsetY, player, { font: '16px Courier', fill: '#ffffff' });
                     var createDate = new Date(games[i].created * 1000);
                     this.add.text(600, offsetY, createDate.toLocaleString(), { font: '16px Courier', fill: '#ffffff' });
